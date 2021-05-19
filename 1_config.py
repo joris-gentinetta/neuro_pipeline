@@ -1,4 +1,3 @@
-#hello
 ## only cell to adapt
 animal = '111'
 max_impedance = 2000000
@@ -8,7 +7,6 @@ import numpy as np
 from load_intan_rhd_format.load_intan_rhd_format import read_data
 import os
 import shutil
-from IPython.utils import io
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
@@ -51,8 +49,7 @@ for index, data_folder in enumerate(data_folders):
         valid_channels = valid_channels.intersection(channel_set)
 
     # create trigger file
-    with io.capture_output():
-        r = read_data(rhd_folder + rhd_files[0])
+    r = read_data(rhd_folder + rhd_files[0])
     trigger = np.array(r['board_dig_in_data'][0])
     i, = np.where(trigger == 1)
     np.save(target_folder + experiment_names[index] + '_trigger', i[-1])
@@ -95,15 +92,14 @@ for index, data_folder in tqdm(enumerate(data_folders)):
     channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels]
     indices = [channel_list.index(valid_channel) for valid_channel in valid_channels]
     total_size = 0
-    with io.capture_output():
-        for i, rhdfile in enumerate(rhd_files):
-            x = np.array(read_data(rhd_folder + rhdfile)['amplifier_data'], dtype=np.int16)[indices]
-            if i == 0:
-                tosave = np.zeros((x.shape[0], x.shape[1] * len(rhd_files)), dtype=np.int16)
-            tosave[:, total_size:total_size + x.shape[1]] = x
-            total_size += x.shape[1]
-        tosave = np.transpose(tosave[:, :total_size])
-        tosave.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
+    for i, rhdfile in enumerate(rhd_files):
+        x = np.array(read_data(rhd_folder + rhdfile)['amplifier_data'], dtype=np.int16)[indices]
+        if i == 0:
+            tosave = np.zeros((x.shape[0], x.shape[1] * len(rhd_files)), dtype=np.int16)
+        tosave[:, total_size:total_size + x.shape[1]] = x
+        total_size += x.shape[1]
+    tosave = np.transpose(tosave[:, :total_size])
+    tosave.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
 
     logbook[index] = total_size
 np.save(target_folder + 'logbook', logbook)
@@ -112,8 +108,7 @@ end = time.time()
 # prepare data for plotting
 rhd_folder = data_folders[0] + 'ephys/'
 rhd_files = os.listdir(rhd_folder)
-with io.capture_output():
-    x = np.array(read_data(rhd_folder + rhd_files[0])['amplifier_data'], dtype=np.int16)[indices]
+x = np.array(read_data(rhd_folder + rhd_files[0])['amplifier_data'], dtype=np.int16)[indices]
 mPFC = np.zeros(x.shape[1], dtype=np.int16)
 n_mPFC = 0
 vH = np.zeros(x.shape[1], dtype=np.int16)
@@ -218,6 +213,8 @@ print(converter.returncode)
 
 # start viewer
 viewer_command = 'circus-gui-python ' + circus_entrypoint
+with open(target_folder + 'start_viewer.txt', 'w') as f:
+    f.write(viewer_command)
 args = shlex.split(viewer_command)
 
 viewer = subprocess.run(args, stdout=subprocess.PIPE,
@@ -226,6 +223,5 @@ viewer = subprocess.run(args, stdout=subprocess.PIPE,
 print(viewer.returncode)
 # print(viewer.stdout)
 
-with open(target_folder + 'start_viewer.txt', 'w') as f:
-    f.write(viewer_command)
+
 print('config  --done')

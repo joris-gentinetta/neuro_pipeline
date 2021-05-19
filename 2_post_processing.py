@@ -1,4 +1,4 @@
-animal = '012'
+animal = '111'
 
 
 import h5py
@@ -51,6 +51,7 @@ for index, time in enumerate(spiketimes):
 cluster_names = np.zeros(data.shape[0], dtype = np.uint8)
 for i in range(1,cluster_names.size):
     cluster_names[i] =  np.where(indexer == i)[0]
+cluster_names[0] = -1
 np.save(circus + 'cluster_names', cluster_names)
 
 
