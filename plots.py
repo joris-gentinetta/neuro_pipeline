@@ -9,6 +9,9 @@ import copy
 make_path_visible = 0.0001
 
 
+# def analyze_medication(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
+#                        , cluster_names, minp=0, maxp=90, n=150, show=show, save=save):
+#
 def plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
                  cluster_names, sigma=10, minp=0, maxp=95, n=150, show=False, save=True):
     movement = events['movement']
@@ -331,8 +334,8 @@ def plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off
     return
 
 
-def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, mode,
-                     plotmode='percent', n=200, m=5, show=False, save=True):
+def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, mode, archive,
+                     plotmode='percent', n=500, m=5, show=False, save=True, do_archive=True):
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
 
     data = raw_data
@@ -352,44 +355,46 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
     for unit in range(data.shape[0]):
         mean_std[unit][0] = np.mean(grid[unit], axis=0)
         mean_std[unit][1] = np.std(grid[unit], axis=0)
+    if do_archive:
+        archive[events][mode] = mean_std[:][0]
+    if show or save:
+        # for i in range(grid.shape[0]):
+        #    grid[i] = gaussian_filter1d(grid[i], sigma=sigma)
+        for i in range(data.shape[0]):
+            fig = plt.figure(figsize=(5, 5))
+            if plotmode == 'std':
+                plt.bar(x, mean_std[i][0], yerr=mean_std[i][1], width=25)
+            elif plotmode == 'percent':
+                plt.bar(x, ((np.mean(data[i]) != 0) * mean_std[i][0] / np.mean(data[i]) + 0) * 100, width=25)
+            if save:
+                plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
 
-    # for i in range(grid.shape[0]):
-    #    grid[i] = gaussian_filter1d(grid[i], sigma=sigma)
-    for i in range(data.shape[0]):
-        fig = plt.figure(figsize=(5, 5))
+            if i != 0:
+                plt.title('firing rate unit ' + str(cluster_names[i]))
+            else:
+                plt.title('firing rate all mua')
+            if show:
+                plt.show()
+            plt.close(fig)
+
+        unit_sum = sum(grid[1:])
+        sum_mean = np.mean(unit_sum, axis=0)
+        sum_std = np.std(unit_sum, axis=0)
         if plotmode == 'std':
-            plt.bar(x, mean_std[i][0], yerr=mean_std[i][1], width=25)
+            plt.bar(x, sum_mean, yerr=sum_std, width=25)
         elif plotmode == 'percent':
-            plt.bar(x, ((np.mean(data[i]) != 0) * mean_std[i][0] / np.mean(data[i]) + 0) * 100, width=25)
+            plt.bar(x, ((np.mean(data) != 0) * sum_mean / np.mean(data) + 0) * 100, width=25)
         if save:
-            plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
-
-        if i != 0:
-            plt.title('firing rate unit ' + str(cluster_names[i]))
-        else:
-            plt.title('firing rate all mua')
+            plt.savefig(file_name + 'all_units' + '.jpg')
+        plt.title('firing rate all units')
         if show:
             plt.show()
         plt.close(fig)
-
-    unit_sum = sum(grid[1:])
-    sum_mean = np.mean(unit_sum, axis=0)
-    sum_std = np.std(unit_sum, axis=0)
-    if plotmode == 'std':
-        plt.bar(x, sum_mean, yerr=sum_std, width=25)
-    elif plotmode == 'percent':
-        plt.bar(x, ((np.mean(data) != 0) * sum_mean / np.mean(data) + 0) * 100, width=25)
-    if save:
-        plt.savefig(file_name + 'all_units' + '.jpg')
-    plt.title('firing rate all units')
-    if show:
-        plt.show()
-    plt.close(fig)
-    return
+    return archive
 
 
 def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-              cluster_names, transition_size=2, minp=0, maxp=90, n=150, show=False, save=True):
+              cluster_names, archive, transition_size=2, minp=0, maxp=90, n=150, show=False, save=True, do_archive=True):
     movement = events['movement']
     mode = 'arms'
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_minp' + str(minp) + '_maxp' + str(
@@ -437,8 +442,6 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
                 if bsum != 0:
                     grid[x, y, i] = np.sum(xyv[2][boolean]) / bsum
 
-        fig = plt.figure(figsize=(5, 5))
-
         for quadrant in range(8):
             valid_values_in_quadrant = grid[:, :, i][np.logical_and(masks[quadrant] == 1, grid[:, :, i] != 0)]
             # fig=plt.figure()
@@ -449,36 +452,39 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
             ROI[i, quadrant] = (valid_values_in_quadrant.mean() - grid[:, :, i][grid[:, :, i] != 0].mean()) / \
                                grid[:, :, i][grid[:, :, i] != 0].mean() * 100
 
-        toplot = ROI[i][[0, 1, 2, 3, 4, 6, 5, 7]]
-        plt.bar(np.arange(8), toplot)
+        if save or show:
+            fig = plt.figure(figsize=(5, 5))
+            toplot = ROI[i][[0, 1, 2, 3, 4, 6, 5, 7]]
+            plt.bar(np.arange(8), toplot)
+            if save:
+                plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
+            if i != 0:
+                plt.title('firing rate unit ' + str(cluster_names[i]))
+            else:
+                plt.title('firing rate all mua')
+            if show:
+                plt.show()
+            plt.close(fig)
+    if do_archive:
+        archive['ROI_EZM'] = ROI
 
+
+    if save or show:
+        ROImean = np.mean(ROI[1:], axis=0)
+        fig = plt.figure(figsize=(5, 5))
+        toplot = ROImean[[0, 1, 2, 3, 4, 6, 5, 7]]
+        plt.bar(np.arange(8), toplot, width=1)
         if save:
-            plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
-
-        if i != 0:
-            plt.title('firing rate unit ' + str(cluster_names[i]))
-        else:
-            plt.title('firing rate all mua')
+            plt.savefig(file_name + 'all_units' + '.jpg')
+        plt.title('firing rate all units')
         if show:
             plt.show()
         plt.close(fig)
-
-    fig = plt.figure(figsize=(5, 5))
-
-    ROImean = np.mean(ROI[1:], axis=0)
-    toplot = ROImean[[0, 1, 2, 3, 4, 6, 5, 7]]
-    plt.bar(np.arange(8), toplot, width=1)
-    if save:
-        plt.savefig(file_name + 'all_units' + '.jpg')
-    plt.title('firing rate all units')
-    if show:
-        plt.show()
-    plt.close(fig)
-    return
+    return archive
 
 
-def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names,
-                 n=5, show=False, save=True):
+def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names, archive,
+                 n=5, show=False, save=True, do_archive=True):
     movement = events['movement']
     mode = 'corners'
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
@@ -516,27 +522,102 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
         for index in range(9):
             ROI[i, index] = (grid[:, :, i][takenfrom[index]] - grid.mean()) * 100 / grid.mean()
 
-        fig = plt.figure(figsize=(5, 5))
-        plt.bar(np.arange(9), ROI[i])
-        if save:
-            plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
+        if save or show:
 
-        if i != 0:
-            plt.title('firing rate unit ' + str(cluster_names[i]))
-        else:
-            plt.title('firing rate all mua')
+            fig = plt.figure(figsize=(5, 5))
+            plt.bar(np.arange(9), ROI[i])
+            if save:
+                plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
+
+            if i != 0:
+                plt.title('firing rate unit ' + str(cluster_names[i]))
+            else:
+                plt.title('firing rate all mua')
+            if show:
+                plt.show()
+            plt.close(fig)
+    if do_archive:
+        archive['ROI_OF'] = ROI
+    if save or show:
+        unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / grid.mean()
+        fig = plt.figure(figsize=(5, 5))
+        plt.bar(np.arange(9), unit_sum)
+        if save:
+            plt.savefig(file_name + 'all_units' + '.jpg')
+        plt.title('firing rate all units')
         if show:
             plt.show()
         plt.close(fig)
+    return archive
+def get_ezm_score(rois):
+    mean = np.mean(rois, axis=1)
+    rois = (rois - mean[:,None]) / mean[:,None]
+    a1 = 0.25 * (np.abs(rois[:,5]-rois[:,4]) + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,7]-rois[:,7]) + np.abs(rois[:,7]-rois[:,6]))
+    b1 = 0.5 * (np.abs(rois[:,5]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6]))
+    open_close = (a1-b1)/(a1+b1)
 
-    unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / grid.mean()
+    a2 = 1/16 * (np.abs(rois[:,0]-rois[:,4]) + np.abs(rois[:,0]-rois[:,7]) + np.abs(rois[:,0]-rois[:,6]) + np.abs(rois[:,0]-rois[:,5])
+                 + np.abs(rois[:,1]-rois[:,4]) + np.abs(rois[:,1]-rois[:,7]) + np.abs(rois[:,1]-rois[:,6]) + np.abs(rois[:,1]-rois[:,5])
+                 + np.abs(rois[:,2]-rois[:,4]) + np.abs(rois[:,2]-rois[:,7]) + np.abs(rois[:,2]-rois[:,6]) + np.abs(rois[:,2]-rois[:,5])
+                 + np.abs(rois[:,3]-rois[:,4]) + np.abs(rois[:,3]-rois[:,7]) + np.abs(rois[:,3]-rois[:,6]) + np.abs(rois[:,3]-rois[:,5]))
+    b2 = 1/12 * (np.abs(rois[:,0]-rois[:,1]) + np.abs(rois[:,1]-rois[:,3]) + np.abs(rois[:,1]-rois[:,2]) + np.abs(rois[:,0]-rois[:,3])
+                 + np.abs(rois[:,0]-rois[:,2]) + np.abs(rois[:,2]-rois[:,3]) + np.abs(rois[:,4]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6])
+                 + np.abs(rois[:,4]-rois[:,5]) + np.abs(rois[:,5]-rois[:,7]) + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,6]-rois[:,7]))
+    crossing = (a2-b2)/(a2+b2)
+    closed = (rois[:, 5] + rois[:, 7])/2
+    transition = (rois[:, 0]+ rois[:, 1] + rois[:, 2]+ rois[:, 3])/4
+    return open_close, crossing, closed, transition
 
-    fig = plt.figure(figsize=(5, 5))
-    plt.bar(np.arange(9), unit_sum)
-    if save:
-        plt.savefig(file_name + 'all_units' + '.jpg')
-    plt.title('firing rate all units')
-    if show:
-        plt.show()
-    plt.close(fig)
-    return
+
+def get_of_score(rois):
+    mean = np.mean(rois, axis=1)
+    rois = (rois - mean[:, None]) / mean[:, None]
+
+    a1 = 1 / 20 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 5])
+                   + np.abs(rois[:, 0] - rois[:, 6]) + np.abs(rois[:, 0] - rois[:, 7])
+                   + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 4])
+                   + np.abs(rois[:, 1] - rois[:, 5]) + np.abs(rois[:, 1] - rois[:, 6])
+                   + np.abs(rois[:, 1] - rois[:, 7]) + np.abs(rois[:, 1] - rois[:, 8])
+                   + np.abs(rois[:, 2] - rois[:, 4]) + np.abs(rois[:, 2] - rois[:, 5])
+                   + np.abs(rois[:, 2] - rois[:, 6]) + np.abs(rois[:, 2] - rois[:, 7])
+                   + np.abs(rois[:, 2] - rois[:, 8]) + np.abs(rois[:, 3] - rois[:, 4])
+                   + np.abs(rois[:, 3] - rois[:, 5]) + np.abs(rois[:, 3] - rois[:, 6])
+                   + np.abs(rois[:, 3] - rois[:, 7]) + np.abs(rois[:, 3] - rois[:, 8]))
+
+    b1 = 1 / 15 * (np.abs(rois[:, 0] - rois[:, 1]) + np.abs(rois[:, 1] - rois[:, 3])
+                   + np.abs(rois[:, 1] - rois[:, 2]) + np.abs(rois[:, 0] - rois[:, 3])
+                   + np.abs(rois[:, 0] - rois[:, 2]) + np.abs(rois[:, 2] - rois[:, 3])
+                   + np.abs(rois[:, 4] - rois[:, 7]) + np.abs(rois[:, 4] - rois[:, 6])
+                   + np.abs(rois[:, 4] - rois[:, 5]) + np.abs(rois[:, 5] - rois[:, 7])
+                   + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(rois[:, 6] - rois[:, 7])
+                   + np.abs(rois[:, 4] - rois[:, 8]) + np.abs(rois[:, 5] - rois[:, 8])
+                   + np.abs(rois[:, 6] - rois[:, 8]))
+
+    of_corners_score = (a1 - b1) / (a1 + b1)
+    of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
+    a2 = 1 / 8 * (np.abs(rois[:, 8] - rois[:, 4]) + np.abs(rois[:, 8] - rois[:, 5])
+                   + np.abs(rois[:, 8] - rois[:, 6]) + np.abs(rois[:, 8] - rois[:, 7])
+                   + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 8])
+                   + np.abs(rois[:, 2] - rois[:, 8]) + np.abs(rois[:, 3] - rois[:, 8]))
+
+
+    b2 = 1 / 28 * (np.abs(rois[:, 0] - rois[:, 1]) + np.abs(rois[:, 0] - rois[:, 2])
+                   + np.abs(rois[:, 0] - rois[:, 3]) + np.abs(rois[:, 0] - rois[:, 4])
+                   + np.abs(rois[:, 0] - rois[:, 5]) + np.abs(rois[:, 0] - rois[:, 6])
+                   + np.abs(rois[:, 0] - rois[:, 7]) + np.abs(rois[:, 1] - rois[:, 2])
+                   + np.abs(rois[:, 1] - rois[:, 3]) + np.abs(rois[:, 1] - rois[:, 4])
+                   + np.abs(rois[:, 1] - rois[:, 5]) + np.abs(rois[:, 1] - rois[:, 6])
+                   + np.abs(rois[:, 1] - rois[:, 7]) + np.abs(rois[:, 2] - rois[:, 3])
+                   + np.abs(rois[:, 2] - rois[:, 4]) + np.abs(rois[:, 2] - rois[:, 5])
+                   + np.abs(rois[:, 2] - rois[:, 6]) + np.abs(rois[:, 2] - rois[:, 7])
+                   + np.abs(rois[:, 3] - rois[:, 4]) + np.abs(rois[:, 3] - rois[:, 5])
+                   + np.abs(rois[:, 3] - rois[:, 6]) + np.abs(rois[:, 3] - rois[:, 7])
+                   + np.abs(rois[:, 4] - rois[:, 5]) + np.abs(rois[:, 4] - rois[:, 6])
+                   + np.abs(rois[:, 4] - rois[:, 7]) + np.abs(rois[:, 5] - rois[:, 6])
+                   + np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 6] - rois[:, 7]))
+
+
+    of_middle_score = (a2 - b2) / (a2 + b2)
+    of_middle = rois[:, 8]
+    return of_corners_score, of_middle_score, of_corners, of_middle
+
