@@ -2,14 +2,14 @@ import copy
 
 import pandas as pd
 
-animal = '111' #one of the sets with one day
-toplot = ['transitions', 'statistics']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
+animal = '211' #one of the sets with one day
+toplot = ['statistics', 'environment']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
              # for archive need at least ['transitions', 'statistics']
 
 delete_plot_folder = False
 show = False
 save = False
-do_archive=True
+do_archive = True
 
 
 import os
@@ -130,7 +130,7 @@ for experiment_name in experiment_names:
         off = 0
 
     if do_archive:
-        archive['characteristics']['mean_'+environment] = np.mean(raw_data[:, physio_trigger+off:], axis=1)
+        archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(raw_data[:, physio_trigger+off:], axis=1)
     #################################
     if 'raw' in toplot:
         plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
@@ -153,19 +153,19 @@ for experiment_name in experiment_names:
             archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
                             cluster_names, archive, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save, do_archive=do_archive)
-    else:
+    elif environment == 'OFT':
         if 'environment' in toplot:
             plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                            cluster_names, minp=0, maxp=100, n=5, show=show, save=save)
+                            cluster_names, minp=0, maxp=100, n=4, show=show, save=save)
         if 'statistics' in toplot:
             archive = plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                               cluster_names, archive, n=5, show=show, save=save, do_archive=do_archive)
+                               cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)
     #################################
     if do_archive:
         if environment == 'EZM':
-            archive['characteristics']['ezm_open_close_score'], archive['characteristics']['ezm_transition_score'],\
-            archive['characteristics']['ezm_closed'], archive['characteristics']['ezm_transition'] = plots.get_ezm_score(archive['ROI_EZM'])
+            archive.loc[:, ('characteristics','ezm_open_close_score')], archive.loc[:, ('characteristics', 'ezm_transition_score')],\
+            archive.loc[:, ('characteristics', 'ezm_closed')], archive.loc[:, ('characteristics', 'ezm_transition')] = plots.get_ezm_score(archive.loc[:, 'ROI_EZM'].values)
         elif environment == 'OFT':
-            archive['characteristics']['of_corners_score'], archive['characteristics']['of_middle_score'],\
-            archive['characteristics']['of_corners'], archive['characteristics']['of_middle'] = plots.get_of_score(archive['ROI_OF'])
+            archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
+            archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
 pass

@@ -5,8 +5,10 @@ import math
 from matplotlib import cm
 import matplotlib as mpl
 import copy
+import pandas as pd
 
 make_path_visible = 0.0001
+idx = pd.IndexSlice
 
 
 # def analyze_medication(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
@@ -356,7 +358,7 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
         mean_std[unit][0] = np.mean(grid[unit], axis=0)
         mean_std[unit][1] = np.std(grid[unit], axis=0)
     if do_archive:
-        archive[events][mode] = mean_std[:][0]
+        archive.loc[:, (events, mode)] = mean_std[:][0]
     if show or save:
         # for i in range(grid.shape[0]):
         #    grid[i] = gaussian_filter1d(grid[i], sigma=sigma)
@@ -466,7 +468,7 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
                 plt.show()
             plt.close(fig)
     if do_archive:
-        archive['ROI_EZM'] = ROI
+        archive.loc[:, idx['ROI_EZM', :]] = ROI
 
 
     if save or show:
@@ -537,7 +539,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
                 plt.show()
             plt.close(fig)
     if do_archive:
-        archive['ROI_OF'] = ROI
+        archive.loc[:, idx['ROI_OF', :]] = ROI
     if save or show:
         unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / grid.mean()
         fig = plt.figure(figsize=(5, 5))
@@ -549,6 +551,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
             plt.show()
         plt.close(fig)
     return archive
+
 def get_ezm_score(rois):
     mean = np.mean(rois, axis=1)
     rois = (rois - mean[:,None]) / mean[:,None]
@@ -556,13 +559,20 @@ def get_ezm_score(rois):
     b1 = 0.5 * (np.abs(rois[:,5]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6]))
     open_close = (a1-b1)/(a1+b1)
 
-    a2 = 1/16 * (np.abs(rois[:,0]-rois[:,4]) + np.abs(rois[:,0]-rois[:,7]) + np.abs(rois[:,0]-rois[:,6]) + np.abs(rois[:,0]-rois[:,5])
-                 + np.abs(rois[:,1]-rois[:,4]) + np.abs(rois[:,1]-rois[:,7]) + np.abs(rois[:,1]-rois[:,6]) + np.abs(rois[:,1]-rois[:,5])
-                 + np.abs(rois[:,2]-rois[:,4]) + np.abs(rois[:,2]-rois[:,7]) + np.abs(rois[:,2]-rois[:,6]) + np.abs(rois[:,2]-rois[:,5])
-                 + np.abs(rois[:,3]-rois[:,4]) + np.abs(rois[:,3]-rois[:,7]) + np.abs(rois[:,3]-rois[:,6]) + np.abs(rois[:,3]-rois[:,5]))
-    b2 = 1/12 * (np.abs(rois[:,0]-rois[:,1]) + np.abs(rois[:,1]-rois[:,3]) + np.abs(rois[:,1]-rois[:,2]) + np.abs(rois[:,0]-rois[:,3])
-                 + np.abs(rois[:,0]-rois[:,2]) + np.abs(rois[:,2]-rois[:,3]) + np.abs(rois[:,4]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6])
-                 + np.abs(rois[:,4]-rois[:,5]) + np.abs(rois[:,5]-rois[:,7]) + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,6]-rois[:,7]))
+    a2 = 1/16 * (np.abs(rois[:,0]-rois[:,4]) + np.abs(rois[:,0]-rois[:,7])
+                 + np.abs(rois[:,0]-rois[:,6]) + np.abs(rois[:,0]-rois[:,5])
+                 + np.abs(rois[:,1]-rois[:,4]) + np.abs(rois[:,1]-rois[:,7])
+                 + np.abs(rois[:,1]-rois[:,6]) + np.abs(rois[:,1]-rois[:,5])
+                 + np.abs(rois[:,2]-rois[:,4]) + np.abs(rois[:,2]-rois[:,7])
+                 + np.abs(rois[:,2]-rois[:,6]) + np.abs(rois[:,2]-rois[:,5])
+                 + np.abs(rois[:,3]-rois[:,4]) + np.abs(rois[:,3]-rois[:,7])
+                 + np.abs(rois[:,3]-rois[:,6]) + np.abs(rois[:,3]-rois[:,5]))
+    b2 = 1/12 * (np.abs(rois[:,0]-rois[:,1]) + np.abs(rois[:,1]-rois[:,3])
+                 + np.abs(rois[:,1]-rois[:,2]) + np.abs(rois[:,0]-rois[:,3])
+                 + np.abs(rois[:,0]-rois[:,2]) + np.abs(rois[:,2]-rois[:,3])
+                 + np.abs(rois[:,4]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6])
+                 + np.abs(rois[:,4]-rois[:,5]) + np.abs(rois[:,5]-rois[:,7])
+                 + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,6]-rois[:,7]))
     crossing = (a2-b2)/(a2+b2)
     closed = (rois[:, 5] + rois[:, 7])/2
     transition = (rois[:, 0]+ rois[:, 1] + rois[:, 2]+ rois[:, 3])/4

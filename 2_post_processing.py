@@ -1,4 +1,4 @@
-animal = '111'
+animal = '211'
 
 
 import h5py
@@ -36,15 +36,19 @@ for i in range(idx.size):
 
 
 
-spiketimes = np.load(folder + stimes)
-spiketimes = spiketimes*50//20000  #sampled at 50Hz
+original_spiketimes = np.load(folder + stimes)
+spiketimes = original_spiketimes*50//20000  #sampled at 50Hz
 clusters = np.load(folder + sclusters)
 data = np.zeros((int(indexer.max()+1), int(max(spiketimes)+1)), dtype=np.uint8)
+original_data = np.zeros((int(indexer.max()+1), int(max(original_spiketimes)+1)), dtype=bool)
 
 
 
 for index, time in enumerate(spiketimes):
     data[indexer[clusters[index]],time] += 1
+
+for index, time in enumerate(original_spiketimes):
+    original_data[indexer[clusters[index]], time] += 1
 
 
 
@@ -72,7 +76,10 @@ logbook_2[1:] = logbook_1[:len(experiment_names)]
 logbook_3 = np.zeros(len(experiment_names)+1, dtype=np.int64)
 for i in range(logbook_3.size):
     logbook_3[i] = np.sum(logbook_2[0:i+1])
+original_logbook_3 = logbook_3
 logbook_3 = logbook_3*50//20000
 
 for i in range(logbook_3.size-1):
     np.save(circus + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
+    np.save(circus + 'original_' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
+

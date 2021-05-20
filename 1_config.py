@@ -1,5 +1,5 @@
 ## only cell to adapt
-animal = '111'
+animal = '211'
 max_impedance = 2000000
 max_channel = 33
 
