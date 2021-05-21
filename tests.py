@@ -1,10 +1,5 @@
+import numpy as np
 
-mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
-                 '2021-02-19_mBWfus009_EZM_ephys': 42,
-                 '2021-02-26_mBWfus012_EZM_ephys': 35}
-
-if '2021-02-26_mBWfus012_EZM_ephys' in mouse_is_late:
-    print('hello')
-
-
-
+a = np.array([[1,2], [1,3]])
+b=a==1
+print(np.sum(b, axis=0))

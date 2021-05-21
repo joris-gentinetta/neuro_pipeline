@@ -7,6 +7,7 @@ import matplotlib as mpl
 import copy
 import pandas as pd
 
+
 make_path_visible = 0.0001
 idx = pd.IndexSlice
 
@@ -336,7 +337,7 @@ def plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off
     return
 
 
-def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, mode, archive,
+def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive, mode,
                      plotmode='percent', n=500, m=5, show=False, save=True, do_archive=True):
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
 
@@ -347,18 +348,29 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
                           transition_index + video_trigger + n + 1 <= data.shape[
                               1] and transition_index + video_trigger - n >= 0]
     grid = [np.zeros((len(transition_indices), m), dtype=np.float32) for _ in range(data.shape[0])]
+
     for tindex, transition_index in enumerate(transition_indices):
         for unit in range(data.shape[0]):
             for timeindex in range(m):
                 grid[unit][tindex, timeindex] = np.mean(data[unit, transition_index - n:transition_index + n + 1][
                                                         (2 * n + 1) * timeindex // n: (2 * n + 1) * (
                                                                 timeindex + 1) // n]) - np.mean(data[unit])
+
     mean_std = [np.zeros((2, m)) for _ in range(data.shape[0])]
     for unit in range(data.shape[0]):
         mean_std[unit][0] = np.mean(grid[unit], axis=0)
         mean_std[unit][1] = np.std(grid[unit], axis=0)
+
     if do_archive:
-        archive.loc[:, (events, mode)] = mean_std[:][0]
+        archive_transition_indices = [transition_index + video_trigger for transition_index in transitions[mode] if
+                              transition_index + video_trigger + 501 <= data.shape[
+                                  1] and transition_index + video_trigger - 500 >= 0]
+        tobearchived = np.zeros((data.shape[0], 1001, len(archive_transition_indices)))
+        for tindex, transition_index in enumerate(archive_transition_indices):
+            for unit in range(data.shape[0]):
+                tobearchived[unit,:, tindex] = data[unit, transition_index - 500:transition_index + 501]
+        tobearchived = np.mean(tobearchived, axis=2) - np.mean(data, axis=1)[:,None]
+        archive.loc[:,  idx[mode,:]] = tobearchived
     if show or save:
         # for i in range(grid.shape[0]):
         #    grid[i] = gaussian_filter1d(grid[i], sigma=sigma)
@@ -502,6 +514,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
     sx = sy = 350
     xyv[0] += 6
     xyv[1] += 6
+    ROI = np.zeros((data.shape[0], 9))
 
     for i in range(data.shape[0]):
         xyv[2] = data[i][physio_trigger + off: xyv.shape[1] + physio_trigger + off] + make_path_visible
@@ -519,10 +532,9 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
 
         for d in range(n):
             grid[d, 1:n - 1, i] = np.mean(grid[d, 1:n - 1, i])
-        ROI = np.zeros((data.shape[0], 9))
         takenfrom = [(n - 1, 0), (0, 0), (0, n - 1), (n - 1, n - 1), (n - 1, 1), (1, 0), (0, 1), (1, n - 1), (1, 1)]
         for index in range(9):
-            ROI[i, index] = (grid[:, :, i][takenfrom[index]] - grid.mean()) * 100 / grid.mean()
+            ROI[i, index] = (grid[:, :, i][takenfrom[index]] - grid[:,:,i].mean()) * 100 / grid[:,:,i].mean()
 
         if save or show:
 
@@ -631,3 +643,30 @@ def get_of_score(rois):
     of_middle = rois[:, 8]
     return of_corners_score, of_middle_score, of_corners, of_middle
 
+def phase(circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
+          show, save, do_archive):
+    number_of_bins = 8
+    factor = 360//number_of_bins
+    phase = np.load(circus + 'phase_files/' + experiment_name)//factor
+    original_data = np.load(circus + 'original_' + experiment_name)
+    masked = np.ma.masked_array(phase, mask = np.invert(original_data))
+    phase_distribution = np.zeros(original_data.shape[0], number_of_bins)
+    for angle in range(-180//factor, 180//factor):
+        phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)
+
+    archive.loc[:, idx['theta_phase', :]] = phase_distribution
+    if save or show:
+        for unit in range(phase_distribution.shape[0]):
+            fig = plt.figure(figsize=(5, 5))
+            plt.bar(np.arange(-180//factor, 180//factor), phase_distribution[unit], width=1)
+            if save:
+                plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
+            if show:
+                if unit != 0:
+                    plt.title('firing rate unit ' + str(cluster_names[i]))
+                else:
+                    plt.title('firing rate all mua')
+                plt.show()
+            plt.close(fig)
+    return archive
+    return archive

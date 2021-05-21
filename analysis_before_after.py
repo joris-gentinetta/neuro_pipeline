@@ -3,7 +3,7 @@ import copy
 import pandas as pd
 
 animal = '211' #one of the sets with one day
-toplot = ['statistics', 'environment']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
+toplot = ['statistics', 'transitions']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
              # for archive need at least ['transitions', 'statistics']
 
 delete_plot_folder = False
@@ -67,7 +67,7 @@ level_1 = ['characteristics' for _ in range(12)] \
           + ['withdraw_exittime' for _ in range(1001)] \
           + ['nosedip_starttime' for _ in range(1001)] \
           + ['nosedip_stoptime' for _ in range(1001)] \
-          + ['theta_phase' for _ in range(360)]
+          + ['theta_phase' for _ in range(8)]
 
 five_sec_range = [i for i in range(-500, 501)]
 ranges = copy.copy(five_sec_range)
@@ -78,7 +78,7 @@ level_2 = ['ezm_open_close_score', 'ezm_transition_score', 'ezm_closed', 'ezm_tr
           + [i for i in range(8)] \
           + [i for i in range(9)] \
           + ranges \
-          + [i for i in range(-180,180)]
+          + [i for i in range(-180//8,180//8)]
 tuples = list(zip(level_1, level_2))
 columns = pd.MultiIndex.from_tuples(tuples)
 if do_archive:
@@ -153,6 +153,11 @@ for experiment_name in experiment_names:
             archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
                             cluster_names, archive, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save, do_archive=do_archive)
+        if 'phase' in toplot:
+            archive = plots.phase(target_folder, plot_folder, experiment_name, off,
+                            physio_trigger,
+                            cluster_names, archive, show=show, save=save, do_archive=do_archive)
+
     elif environment == 'OFT':
         if 'environment' in toplot:
             plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
@@ -168,4 +173,7 @@ for experiment_name in experiment_names:
         elif environment == 'OFT':
             archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
             archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
+
+
+
 pass

@@ -13,6 +13,14 @@ import time
 import subprocess
 import shlex
 
+from scipy.signal import hilbert
+from scipy.signal import butter, sosfilt
+
+butter_order = 3
+theta_band = [4,12]
+spike_band = [300, 3000]
+sampling_rate = 20000
+
 # folder preparation
 animal_folder = r'E:/anxiety_ephys/' + animal + '/'
 sub_folder = 'circus'
@@ -22,6 +30,8 @@ if (os.path.exists(target_folder)):
     print('overwrite ', target_folder, '? [y/n]')
     if input() == 'y':
         shutil.rmtree(target_folder)
+    else:
+        raise KeyboardInterrupt('Config step was already done.')
 time.sleep(5)
 
 experiment_names = os.listdir(animal_folder)
@@ -35,6 +45,9 @@ circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat
 # folder creation
 os.mkdir(target_folder)
 os.mkdir(target_folder + 'dat_files')
+os.mkdir(target_folder + 'phase_files')
+os.mkdir(target_folder + 'numpy_files')
+
 os.mkdir(target_folder + 'dat_files_mod')
 
 # get common channels, create trigger files
@@ -81,6 +94,8 @@ for i in range(len(pad)):
 total_nb_channels = len(valid_channels)
 channels = list(np.arange(0, total_nb_channels))
 
+
+
 # create .dat files
 # 15min
 start = time.time()
@@ -98,8 +113,18 @@ for index, data_folder in tqdm(enumerate(data_folders)):
             tosave = np.zeros((x.shape[0], x.shape[1] * len(rhd_files)), dtype=np.int16)
         tosave[:, total_size:total_size + x.shape[1]] = x
         total_size += x.shape[1]
+    raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
+
+    sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
+    sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
+    theta_filtered = sosfilt(sos_theta, raw, axis=1)
+    spike_filtered = sosfilt(sos_spike, raw, axis=1)
+    hilbert_phase = np.angle(hilbert(theta_filtered, axis = 1), deg=True) # use np.unwrap()?
     tosave = np.transpose(tosave[:, :total_size])
     tosave.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
+    np.save(target_folder + 'phase_files/' + experiment_names[index] , hilbert_phase)
+    np.save(target_folder + 'numpy_files/' + experiment_names[index] , spike_filtered)
+
 
     logbook[index] = total_size
 np.save(target_folder + 'logbook', logbook)
@@ -180,7 +205,7 @@ cap2 = ('[data]'
         + '\noutput_dir = ' + target_folder + 'dat_files_mod')
 
 # create parameters.params file
-param_file
+
 with open(param_file, 'w') as f:
     f.write(cap2)
 with open(templates + 'parameters.params', 'r') as f:
