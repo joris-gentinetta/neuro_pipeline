@@ -643,18 +643,26 @@ def get_of_score(rois):
     of_middle = rois[:, 8]
     return of_corners_score, of_middle_score, of_corners, of_middle
 
-def phase(circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
+def plot_phase(circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive, environment,
           show, save, do_archive):
+    offset = (physio_trigger + off) * 20000 // 50
+    mode = 'phase'
+    key = 'theta_phase_' + environment
+    file_name = plot_folder + experiment_name + '_' + mode + '_'
     number_of_bins = 8
     factor = 360//number_of_bins
-    phase = np.load(circus + 'phase_files/' + experiment_name)//factor
-    original_data = np.load(circus + 'original_' + experiment_name)
+    phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:,offset:]//factor
+    original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:,offset:]
+    print(original_data[0])
     masked = np.ma.masked_array(phase, mask = np.invert(original_data))
-    phase_distribution = np.zeros(original_data.shape[0], number_of_bins)
+    phase_distribution = np.zeros((original_data.shape[0], number_of_bins))
     for angle in range(-180//factor, 180//factor):
         phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)
-
-    archive.loc[:, idx['theta_phase', :]] = phase_distribution
+    mean = phase_distribution.mean(axis=1)
+    phase_distribution -= mean[:, None]
+    phase_distribution = phase_distribution * 100 / mean[:, None]
+    if do_archive:
+        archive.loc[:, idx[key, :]] = phase_distribution
     if save or show:
         for unit in range(phase_distribution.shape[0]):
             fig = plt.figure(figsize=(5, 5))
@@ -663,10 +671,18 @@ def phase(circus, plot_folder, experiment_name, off, physio_trigger, cluster_nam
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
             if show:
                 if unit != 0:
-                    plt.title('firing rate unit ' + str(cluster_names[i]))
+                    plt.title('firing rate unit ' + str(cluster_names[unit]))
                 else:
                     plt.title('firing rate all mua')
                 plt.show()
             plt.close(fig)
-    return archive
+
+        fig = plt.figure(figsize=(5, 5))
+        plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution.mean(axis=0), width=1)
+        if save:
+            plt.savefig(file_name + 'all_units' + '.jpg')
+        plt.title('firing rate all units')
+        if show:
+            plt.show()
+        plt.close(fig)
     return archive

@@ -3,8 +3,8 @@ import copy
 import pandas as pd
 
 animal = '211' #one of the sets with one day
-toplot = ['statistics', 'transitions']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
-             # for archive need at least ['transitions', 'statistics']
+toplot = ['phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+             # for full archive need at least ['transitions', 'statistics', 'phase]
 
 delete_plot_folder = False
 show = False
@@ -34,6 +34,9 @@ data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
 framerate = 50
+
+number_of_bins = 8
+factor = 360//number_of_bins
 
 animal_folder = data_folder + animal + '/'
 experiment_names = os.listdir(animal_folder)
@@ -67,7 +70,13 @@ level_1 = ['characteristics' for _ in range(12)] \
           + ['withdraw_exittime' for _ in range(1001)] \
           + ['nosedip_starttime' for _ in range(1001)] \
           + ['nosedip_stoptime' for _ in range(1001)] \
-          + ['theta_phase' for _ in range(8)]
+          + ['theta_phase_OFT' for _ in range(number_of_bins)] \
+          + ['theta_phase_EZM' for _ in range(number_of_bins)]   \
+          + ['theta_phase_before' for _ in range(number_of_bins)]   \
+          + ['theta_phase_after' for _ in range(number_of_bins)]
+
+
+
 
 five_sec_range = [i for i in range(-500, 501)]
 ranges = copy.copy(five_sec_range)
@@ -78,7 +87,10 @@ level_2 = ['ezm_open_close_score', 'ezm_transition_score', 'ezm_closed', 'ezm_tr
           + [i for i in range(8)] \
           + [i for i in range(9)] \
           + ranges \
-          + [i for i in range(-180//8,180//8)]
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]
 tuples = list(zip(level_1, level_2))
 columns = pd.MultiIndex.from_tuples(tuples)
 if do_archive:
@@ -153,10 +165,6 @@ for experiment_name in experiment_names:
             archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
                             cluster_names, archive, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save, do_archive=do_archive)
-        if 'phase' in toplot:
-            archive = plots.phase(target_folder, plot_folder, experiment_name, off,
-                            physio_trigger,
-                            cluster_names, archive, show=show, save=save, do_archive=do_archive)
 
     elif environment == 'OFT':
         if 'environment' in toplot:
@@ -165,6 +173,11 @@ for experiment_name in experiment_names:
         if 'statistics' in toplot:
             archive = plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
                                cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)
+    #################################
+    if 'phase' in toplot:
+        archive = plots.plot_phase(target_folder, plot_folder, experiment_name, off,
+                              physio_trigger,
+                              cluster_names, archive, environment, show=show, save=save, do_archive=do_archive)
     #################################
     if do_archive:
         if environment == 'EZM':

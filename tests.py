@@ -1,5 +1,5 @@
 import numpy as np
-
-a = np.array([[1,2], [1,3]])
-b=a==1
-print(np.sum(b, axis=0))
+path = r'E:\anxiety_ephys\211\circus\phase_files/2021-03-13_mBWfus011_after_arena_ephys.npy'
+a = np.load(path)
+b= a[0,:]
+pass
