@@ -1,18 +1,26 @@
-animal = '012'
-toplot = ['statistics']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics']
+
+animal = '211' #one of the sets with one day
+toplot = ['phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+             # for full archive need at least ['transitions', 'statistics', 'phase]
 
 delete_plot_folder = False
-show = True
+show = False
 save = False
+do_archive = True
 
+import copy
+import pandas as pd
 import os
 import shutil
 import time
-
 import numpy as np
 import pickle5 as pkl
-
 import plots
+
+transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
+                  'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
+                  'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
+                  'nosedip_starttime', 'nosedip_stoptime']
 
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -23,6 +31,9 @@ data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
 framerate = 50
+
+number_of_bins = 8
+factor = 360//number_of_bins
 
 animal_folder = data_folder + animal + '/'
 experiment_names = os.listdir(animal_folder)
@@ -37,6 +48,50 @@ if os.path.exists(all_plots):
 else:
     os.mkdir(all_plots)
 time.sleep(5)
+cluster_names = np.load(target_folder + 'cluster_names.npy')
+
+level_1 = ['characteristics' for _ in range(12)] \
+          + ['ROI_EZM' for _ in range(8)] \
+          + ['ROI_OF' for _ in range(9)] \
+          + ['open_closed_entrytime' for _ in range(1001)] \
+          + ['open_closed_exittime' for _ in range(1001)] \
+          + ['closed_open_entrytime' for _ in range(1001)] \
+          + ['closed_open_exittime' for _ in range(1001)]\
+          + ['lingering_entrytime' for _ in range(1001)] \
+          + ['lingering_exittime' for _ in range(1001)] \
+          + ['prolonged_open_closed_entrytime' for _ in range(1001)] \
+          + ['prolonged_open_closed_exittime' for _ in range(1001)] \
+          + ['prolonged_closed_open_entrytime' for _ in range(1001)]\
+          + ['prolonged_closed_open_exittime' for _ in range(1001)]\
+          + ['withdraw_entrytime' for _ in range(1001)]\
+          + ['withdraw_exittime' for _ in range(1001)] \
+          + ['nosedip_starttime' for _ in range(1001)] \
+          + ['nosedip_stoptime' for _ in range(1001)] \
+          + ['theta_phase_OFT' for _ in range(number_of_bins)] \
+          + ['theta_phase_EZM' for _ in range(number_of_bins)]   \
+          + ['theta_phase_before' for _ in range(number_of_bins)]   \
+          + ['theta_phase_after' for _ in range(number_of_bins)]
+
+
+
+
+five_sec_range = [i for i in range(-500, 501)]
+ranges = copy.copy(five_sec_range)
+for i in range(13):
+    ranges.extend(five_sec_range)
+level_2 = ['ezm_open_close_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
+           'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
+          + [i for i in range(8)] \
+          + [i for i in range(9)] \
+          + ranges \
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]\
+          + [i for i in range(-180//factor,180//factor)]
+tuples = list(zip(level_1, level_2))
+columns = pd.MultiIndex.from_tuples(tuples)
+if do_archive:
+    archive = pd.DataFrame(index=cluster_names, columns=columns)
 
 for experiment_name in experiment_names:
 
@@ -44,8 +99,11 @@ for experiment_name in experiment_names:
         environment = 'EZM'
     elif experiment_name[-7] == 'F':
         environment = 'OFT'
-    else:
-        continue
+    elif experiment_name[21:23] == 'be':
+        environment = 'before'
+    elif experiment_name[21:23] == 'af':
+        environment = 'after'
+
     eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
     datafile = target_folder + experiment_name + '.npy'
     ptriggerfile = target_folder + experiment_name + '_trigger.npy'
@@ -74,9 +132,14 @@ for experiment_name in experiment_names:
     #     off = 0
     # else:
     #     off = nans[-1] + 1
+    accomodation = 20
     if experiment_name in mouse_is_late:
-        off = (mouse_is_late[experiment_name] + 20)*framerate
-    cluster_names = np.load(target_folder + 'cluster_names.npy')
+        off = (mouse_is_late[experiment_name] + accomodation)*framerate
+    else:
+        off = 0
+
+    if do_archive:
+        archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(raw_data[:, physio_trigger+off:], axis=1)
     #################################
     if 'raw' in toplot:
         plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
@@ -91,18 +154,35 @@ for experiment_name in experiment_names:
             plots.plot_circle(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
                               cluster_names, n=360, sigma=-1, show=show, save=save)
         if 'transitions' in toplot:
-            # plotmode is one of ['std', 'percent']
-            plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger,
-                                   mode='lingering_exittime', plotmode='percent', n=200, m=5, show=show, save=save)
+            for mode in transition_keys:
+                # plotmode is one of ['std', 'percent']
+                archive = plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive,
+                                       mode=mode, plotmode='percent', n=200, m=5, show=show, save=save, do_archive=do_archive)
         if 'statistics' in toplot:
-            plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
+            archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
-                            cluster_names, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save)
-    else:
+                            cluster_names, archive, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save, do_archive=do_archive)
+
+    elif environment == 'OFT':
         if 'environment' in toplot:
             plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                            cluster_names, minp=0, maxp=100, n=5, show=show, save=save)
+                            cluster_names, minp=0, maxp=100, n=4, show=show, save=save)
         if 'statistics' in toplot:
-            plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                               cluster_names, n=5, show=show, save=save)
-#################################
+            archive = plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
+                               cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)
+    #################################
+    if 'phase' in toplot:
+        archive = plots.plot_phase(target_folder, plot_folder, experiment_name, off,
+                              physio_trigger,
+                              cluster_names, archive, environment, show=show, save=save, do_archive=do_archive)
+    #################################
+    if do_archive:
+        if environment == 'EZM':
+            archive.loc[:, ('characteristics','ezm_open_close_score')], archive.loc[:, ('characteristics', 'ezm_transition_score')],\
+            archive.loc[:, ('characteristics', 'ezm_closed')], archive.loc[:, ('characteristics', 'ezm_transition')] = plots.get_ezm_score(archive.loc[:, 'ROI_EZM'].values)
+        elif environment == 'OFT':
+            archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
+            archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
+
+archive.to_pickle(target_folder + 'archive')
+pass

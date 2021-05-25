@@ -17,7 +17,7 @@ from scipy.signal import hilbert
 from scipy.signal import butter, sosfilt
 
 butter_order = 3
-theta_band = [4,12]
+theta_band = [4, 12]
 spike_band = [300, 3000]
 sampling_rate = 20000
 
@@ -66,19 +66,20 @@ for index, data_folder in enumerate(data_folders):
     trigger = np.array(r['board_dig_in_data'][0])
     i, = np.where(trigger == 1)
     np.save(target_folder + experiment_names[index] + '_trigger', i[-1])
-
-pta = [28, 29, 27, 12, 20, 21, 11, 7, 1, 8, 10, 15, 18, 23, 26, 31, 2, 6, 9, 14, 17, 22, 25, 30, 19, 24, 0, 13, 16, 5,
-       4, 3, 32, 45, 43, 56, 35, 40, 60, 52, 33, 38, 41, 46, 49, 54, 57, 62, 34, 39, 42, 47, 50, 55, 58, 63, 44, 36, 59,
-       61, 37, 48, 53, 51]
-valid_channels = [channel for channel in valid_channels if pta.index(channel) + 1 < max_channel]
-
 # pta[x] denotes the channel of pad x+1
 pta = [28, 29, 27, 12, 20, 21, 11, 7, 1, 8, 10, 15, 18, 23, 26, 31, 2, 6, 9, 14, 17, 22, 25, 30, 19, 24, 0, 13, 16, 5,
        4, 3, 32, 45, 43, 56, 35, 40, 60, 52, 33, 38, 41, 46, 49, 54, 57, 62, 34, 39, 42, 47, 50, 55, 58, 63, 44, 36, 59,
        61, 37, 48, 53, 51]
+ordered_channels = []
+for i in range(64):
+    for channel in valid_channels:
+        if pta.index(channel) + 1 == i:
+            ordered_channels.append(channel)
+mPFC_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 < max_channel]
+vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 >= max_channel]
 
 # pad[x] denotes the pad corresponding to data['amplifier_data'][x]
-pad = [pta[channel] + 1 for channel in valid_channels]
+pad = [pta[channel] + 1 for channel in mPFC_channels]
 
 # probe file 'graph'
 graph = []
@@ -91,10 +92,8 @@ for i in range(len(pad)):
     else:
         geometry[i] = (3000, (pad[i] - 64) * 70)
 # param file 'nchannels'
-total_nb_channels = len(valid_channels)
+total_nb_channels = len(mPFC_channels)
 channels = list(np.arange(0, total_nb_channels))
-
-
 
 # create .dat files
 # 15min
@@ -105,26 +104,31 @@ for index, data_folder in tqdm(enumerate(data_folders)):
     rhd_files = os.listdir(rhd_folder)
     amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']  # time: 02:28min for 25 files
     channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels]
-    indices = [channel_list.index(valid_channel) for valid_channel in valid_channels]
+    mPFC_indices = [channel_list.index(valid_channel) for valid_channel in mPFC_channels]
+    vHIP_indices = [channel_list.index(valid_channel) for valid_channel in vHIP_channels]
     total_size = 0
     for i, rhdfile in enumerate(rhd_files):
-        x = np.array(read_data(rhd_folder + rhdfile)['amplifier_data'], dtype=np.int16)[indices]
+        rhd_data = np.array(read_data(rhd_folder + rhdfile)['amplifier_data'], dtype=np.int16)
+        mPFC_data = rhd_data[mPFC_indices]
+        vHIP_data = rhd_data[vHIP_indices]
         if i == 0:
-            tosave = np.zeros((x.shape[0], x.shape[1] * len(rhd_files)), dtype=np.int16)
-        tosave[:, total_size:total_size + x.shape[1]] = x
-        total_size += x.shape[1]
-    raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
-
+            mPFC_concatenated = np.zeros((mPFC_data.shape[0], mPFC_data.shape[1] * len(rhd_files)), dtype=np.int16)
+            vHIP_concatenated = np.zeros((vHIP_data.shape[0], vHIP_data.shape[1] * len(rhd_files)), dtype=np.int16)
+        mPFC_concatenated[:, total_size:total_size + mPFC_concatenated.shape[1]] = mPFC_concatenated
+        vHIP_concatenated[:, total_size:total_size + vHIP_concatenated.shape[1]] = vHIP_concatenated
+        total_size += vHIP_concatenated.shape[1]
+    mPFC_concatenated = mPFC_concatenated[:total_size]
+    vHIP_concatenated = vHIP_concatenated[:total_size]
+    # raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
     sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-    theta_filtered = sosfilt(sos_theta, raw, axis=1)
-    spike_filtered = sosfilt(sos_spike, raw, axis=1)
-    hilbert_phase = np.angle(hilbert(theta_filtered, axis = 1), deg=True) # use np.unwrap()?
-    tosave = np.transpose(tosave[:, :total_size])
-    tosave.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-    np.save(target_folder + 'phase_files/' + experiment_names[index] , hilbert_phase)
-    np.save(target_folder + 'numpy_files/' + experiment_names[index] , spike_filtered)
-
+    theta_filtered = sosfilt(sos_theta, vHIP_concatenated, axis=1)
+    spike_filtered = sosfilt(sos_spike, mPFC_concatenated, axis=1)
+    hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
+    data_for_spikesorting = np.transpose(mPFC_concatenated)
+    data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
+    np.save(target_folder + 'phase_files/' + experiment_names[index], hilbert_phase)
+    np.save(target_folder + 'numpy_files/' + experiment_names[index], spike_filtered)
 
     logbook[index] = total_size
 np.save(target_folder + 'logbook', logbook)
