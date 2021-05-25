@@ -78,19 +78,21 @@ for i in range(64):
 mPFC_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 < max_channel]
 vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 >= max_channel]
 
-# pad[x] denotes the pad corresponding to data['amplifier_data'][x]
-pad = [pta[channel] + 1 for channel in mPFC_channels]
-
+# pads[x] denotes the pad corresponding to data['amplifier_data'][x]
+mPFC_pads = [pta[channel] + 1 for channel in mPFC_channels]
+vHIP_pads = [pta[channel] + 1 for channel in vHIP_channels]
+np.save(target_folder + 'phase_files/' + 'vHIP_pads', vHIP_pads)
+np.save(target_folder + 'numpy_files/' + 'mPFC_pads', mPFC_pads)
 # probe file 'graph'
 graph = []
 
 # probe file 'geometry'
 geometry = {}
-for i in range(len(pad)):
-    if pad[i] < 33:
-        geometry[i] = (0, (pad[i] - 32) * 70)
+for i in range(len(mPFC_pads)):
+    if mPFC_pads[i] < 33:
+        geometry[i] = (0, (mPFC_pads[i] - 32) * 70)
     else:
-        geometry[i] = (3000, (pad[i] - 64) * 70)
+        geometry[i] = (3000, (mPFC_pads[i] - 64) * 70)
 # param file 'nchannels'
 total_nb_channels = len(mPFC_channels)
 channels = list(np.arange(0, total_nb_channels))
@@ -137,20 +139,20 @@ end = time.time()
 # prepare data for plotting
 rhd_folder = data_folders[0] + 'ephys/'
 rhd_files = os.listdir(rhd_folder)
-x = np.array(read_data(rhd_folder + rhd_files[0])['amplifier_data'], dtype=np.int16)[indices]
+x = np.array(read_data(rhd_folder + rhd_files[0])['amplifier_data'], dtype=np.int16)[mPFC_indices]
 mPFC = np.zeros(x.shape[1], dtype=np.int16)
 n_mPFC = 0
 vH = np.zeros(x.shape[1], dtype=np.int16)
 n_vH = 0
 for i in range(x.shape[0]):
-    if pad[i] < 33:
+    if mPFC_pads[i] < 33:
         mPFC += x[i]
         n_mPFC += 1
     else:
         vH += x[i]
         n_vH += 1
 for i in range(x.shape[0]):
-    if pad[i] < 33:
+    if mPFC_pads < 33:
         x[i] = (x[i] - mPFC / n_mPFC).astype(np.int16)
 
     else:
@@ -166,12 +168,12 @@ gs = fig.add_gridspec(64, hspace=0)
 axs = gs.subplots(sharex=True, sharey=True)
 for i, ax in tqdm(enumerate(axs)):
     for ind in range(64):
-        if ind >= len(pad):
+        if ind >= len(mPFC_pads):
             if i == 31:
                 ax.plot(zero, label='0, frontier', linewidth=lw)
             else:
                 ax.plot(zero, label='0', linewidth=lw)
-        elif pad[ind] == i + 1:
+        elif mPFC_pads[ind] == i + 1:
             if i == 31:
                 if amp_channels[ind]['electrode_impedance_magnitude'] > max_impedance:
                     ax.plot(d[ind], label=str(ind) + ', impedance' + ', frontier', linewidth=lw)

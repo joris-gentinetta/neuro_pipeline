@@ -11,7 +11,7 @@ import pandas as pd
 make_path_visible = 0.0001
 idx = pd.IndexSlice
 
-def plot_circle(overallplots, amimal, ROI, show=False, save=True):
+def plot_circle(overallplots, animal, ROI, show=False, save=True):
     mode = 'circle'
     file_name = overallplots + animal + '_' + mode
     colorcoding = np.empty(20)
