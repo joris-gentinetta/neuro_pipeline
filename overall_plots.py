@@ -38,7 +38,7 @@ def plot_circle(overallplots, animal, ROI, show=False, save=True):
     if save:
         plt.savefig(file_name + '.jpg')
     if show:
-        plt.title('ROI' + animal )
+        plt.title('ROI ' + animal )
         plt.show()
     plt.close(fig)
     return

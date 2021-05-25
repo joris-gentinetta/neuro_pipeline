@@ -643,46 +643,47 @@ def get_of_score(rois):
     of_middle = rois[:, 8]
     return of_corners_score, of_middle_score, of_corners, of_middle
 
-def plot_phase(circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive, environment,
+def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive, environment,
           show, save, do_archive):
     offset = (physio_trigger + off) * 20000 // 50
     mode = 'phase'
     key = 'theta_phase_' + environment
+    unit_keys = [key + '_' + vHIP_pad for vHIP_pad in vHIP_pads]
     file_name = plot_folder + experiment_name + '_' + mode + '_'
     number_of_bins = 8
     factor = 360//number_of_bins
     phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:,offset:]//factor
     original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:,offset:]
-    print(original_data[0])
-    masked = np.ma.masked_array(phase, mask = np.invert(original_data))
-    phase_distribution = np.zeros((original_data.shape[0], number_of_bins))
-    for angle in range(-180//factor, 180//factor):
-        phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)
-    mean = phase_distribution.mean(axis=1)
-    phase_distribution -= mean[:, None]
-    phase_distribution = phase_distribution * 100 / mean[:, None]
-    if do_archive:
-        archive.loc[:, idx[key, :]] = phase_distribution
-    if save or show:
-        for unit in range(phase_distribution.shape[0]):
+    for i, unit in enumerate(cluster_names):
+        masked = np.ma.masked_array(phase, mask = np.tile(np.invert(original_data[i]),(phase.shape[0], 1)))
+        phase_distribution = np.zeros((masked.shape[0], number_of_bins))
+        for angle in range(-180//factor, 180//factor):
+            phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)
+        mean = phase_distribution.mean(axis=1)
+        phase_distribution -= mean[:, None]
+        phase_distribution = phase_distribution * 100 / mean[:, None]
+        if do_archive:
+            archive.loc[unit, idx[unit_keys, :]] = np.reshape(phase_distribution, -1)
+        if save or show:
+            for row, vHIP_pad in enumerate(vHIP_pads):
+                fig = plt.figure(figsize=(5, 5))
+                plt.bar(np.arange(-180//factor, 180//factor), phase_distribution[row], width=1)
+                if save:
+                    plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
+                if show:
+                    if unit != -1:
+                        plt.title('phase plot unit ' + str(unit) + ', pad ' + str(vHIP_pad))
+                    else:
+                        plt.title('phase plot all mua, pad ' + str(vHIP_pad))
+                    plt.show()
+                plt.close(fig)
+
             fig = plt.figure(figsize=(5, 5))
-            plt.bar(np.arange(-180//factor, 180//factor), phase_distribution[unit], width=1)
+            plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution.mean(axis=0), width=1)
             if save:
-                plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
+                plt.savefig(file_name + '_unit_' + str(unit) + 'all_pads.jpg')
             if show:
-                if unit != 0:
-                    plt.title('firing rate unit ' + str(cluster_names[unit]))
-                else:
-                    plt.title('firing rate all mua')
+                plt.title('phase plot all pads, unit ' + str(unit))
                 plt.show()
             plt.close(fig)
-
-        fig = plt.figure(figsize=(5, 5))
-        plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution.mean(axis=0), width=1)
-        if save:
-            plt.savefig(file_name + 'all_units' + '.jpg')
-        plt.title('firing rate all units')
-        if show:
-            plt.show()
-        plt.close(fig)
     return archive

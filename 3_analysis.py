@@ -49,6 +49,7 @@ else:
     os.mkdir(all_plots)
 time.sleep(5)
 cluster_names = np.load(target_folder + 'cluster_names.npy')
+vHIP_pads = np.load(target_folder + 'phase_files/' + 'vHIP_pads')
 
 level_1 = ['characteristics' for _ in range(12)] \
           + ['ROI_EZM' for _ in range(8)] \
@@ -67,27 +68,29 @@ level_1 = ['characteristics' for _ in range(12)] \
           + ['withdraw_exittime' for _ in range(1001)] \
           + ['nosedip_starttime' for _ in range(1001)] \
           + ['nosedip_stoptime' for _ in range(1001)] \
-          + ['theta_phase_OFT' for _ in range(number_of_bins)] \
-          + ['theta_phase_EZM' for _ in range(number_of_bins)]   \
-          + ['theta_phase_before' for _ in range(number_of_bins)]   \
-          + ['theta_phase_after' for _ in range(number_of_bins)]
+
+for pad in vHIP_pads:
+    level_1 += ['theta_phase_OFT_' + str(pad) for _ in range(number_of_bins)]
+    level_1 += ['theta_phase_EZM' + str(pad) for _ in range(number_of_bins)]
+    level_1 += ['theta_phase_before' + str(pad) for _ in range(number_of_bins)]
+    level_1 += ['theta_phase_after' + str(pad) for _ in range(number_of_bins)]
 
 
 
-
-five_sec_range = [i for i in range(-500, 501)]
-ranges = copy.copy(five_sec_range)
+five_sec_range = np.arange(-500, 501)
+ranges = np.copy(five_sec_range)
 for i in range(13):
     ranges.extend(five_sec_range)
+degree360 = np.arange(-180//factor,180//factor)
+phase_ranges = np.copy(degree360)
+for i in range(4*len(vHIP_pads)):
+    phase_ranges.extend(five_sec_range)
 level_2 = ['ezm_open_close_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
            'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
           + [i for i in range(8)] \
           + [i for i in range(9)] \
           + ranges \
-          + [i for i in range(-180//factor,180//factor)]\
-          + [i for i in range(-180//factor,180//factor)]\
-          + [i for i in range(-180//factor,180//factor)]\
-          + [i for i in range(-180//factor,180//factor)]
+          + phase_ranges
 tuples = list(zip(level_1, level_2))
 columns = pd.MultiIndex.from_tuples(tuples)
 if do_archive:
@@ -172,7 +175,7 @@ for experiment_name in experiment_names:
                                cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)
     #################################
     if 'phase' in toplot:
-        archive = plots.plot_phase(target_folder, plot_folder, experiment_name, off,
+        archive = plots.plot_phase(vHIP_pads, target_folder, plot_folder, experiment_name, off,
                               physio_trigger,
                               cluster_names, archive, environment, show=show, save=save, do_archive=do_archive)
     #################################
