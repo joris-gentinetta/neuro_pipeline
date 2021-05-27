@@ -35,11 +35,13 @@ import numpy as np
 #
 # logbook = np.load(target_folder + 'logbook.npy')
 #
-# pass
-a = np.array([0,2,3,4])
-b = a[:,None]
-c = np.arange(16).reshape((4,4))
-d = c/b
+# # pass
+# a = np.array([[0,2,3,4],[0,2,3,4]])
+# b = np.array([[True, True, False, True], [True, False, False, True]])
+# c = a[b]
+# q = np.load(r'E:\anxiety_ephys\012\circus\cluster_names.npy')
+a = np.array([])
+b = np.mean(a)
 pass
 # original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
 # num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
