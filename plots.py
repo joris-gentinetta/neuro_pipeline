@@ -379,7 +379,12 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
             if plotmode == 'std':
                 plt.bar(x, mean_std[i][0], yerr=mean_std[i][1], width=25)
             elif plotmode == 'percent':
-                plt.bar(x, ((np.mean(data[i]) != 0) * mean_std[i][0] / np.mean(data[i]) + 0) * 100, width=25)
+                mean = np.mean(mean_std[i][0])
+                if mean != 0:
+                    toplot = (mean_std[i][0] - mean) * 100 / mean
+                else:
+                    toplot = mean_std[i][0]
+                plt.bar(x, toplot, width=25)
             if save:
                 plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
 
@@ -648,14 +653,15 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
     offset = (physio_trigger + off) * 20000 // 50
     mode = 'phase'
     key = 'theta_phase_' + environment
-    unit_keys = [key + '_' + vHIP_pad for vHIP_pad in vHIP_pads]
+    unit_keys = [key + '_' + str(vHIP_pad) for vHIP_pad in vHIP_pads]
     file_name = plot_folder + experiment_name + '_' + mode + '_'
     number_of_bins = 8
     factor = 360//number_of_bins
     phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:,offset:]//factor
     original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:,offset:]
     for i, unit in enumerate(cluster_names):
-        masked = np.ma.masked_array(phase, mask = np.tile(np.invert(original_data[i]),(phase.shape[0], 1)))
+        mask = np.tile(np.invert(original_data[i]), (phase.shape[0], 1))
+        masked = np.ma.masked_array(phase, mask = mask)
         phase_distribution = np.zeros((masked.shape[0], number_of_bins))
         for angle in range(-180//factor, 180//factor):
             phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)

@@ -1,4 +1,4 @@
-animal = '211'
+animal = '012'
 
 
 import h5py
@@ -34,13 +34,23 @@ for i in range(idx.size):
         indexer[idx[i]] = n
         n+=1
 
+logbook_1 = np.load(circus + 'logbook.npy')
+logbook_2 = np.zeros(len(experiment_names)+1)
+logbook_2[1:] = logbook_1[:len(experiment_names)]
+
+logbook_3 = np.zeros(len(experiment_names)+1, dtype=np.int64)
+for i in range(logbook_3.size):
+    logbook_3[i] = np.sum(logbook_2[0:i+1])
+original_logbook_3 = logbook_3
+logbook_3 = logbook_3*50//20000
+
 
 
 original_spiketimes = np.load(folder + stimes)
 spiketimes = original_spiketimes*50//20000  #sampled at 50Hz
 clusters = np.load(folder + sclusters)
-data = np.zeros((int(indexer.max()+1), int(max(spiketimes)+1)), dtype=np.uint8)
-original_data = np.zeros((int(indexer.max()+1), int(max(original_spiketimes)+1)), dtype=bool)
+data = np.zeros((int(indexer.max()+1), logbook_3[-1]), dtype=np.uint8)
+original_data = np.zeros((int(indexer.max()+1), original_logbook_3[-1]), dtype=bool)
 
 
 
@@ -68,16 +78,6 @@ for i, ax in tqdm(enumerate(axs)):
     ax.legend(loc = 'upper right')
 #plt.ylim(-250, 250)
 
-
-logbook_1 = np.load(circus + 'logbook.npy')
-logbook_2 = np.zeros(len(experiment_names)+1)
-logbook_2[1:] = logbook_1[:len(experiment_names)]
-
-logbook_3 = np.zeros(len(experiment_names)+1, dtype=np.int64)
-for i in range(logbook_3.size):
-    logbook_3[i] = np.sum(logbook_2[0:i+1])
-original_logbook_3 = logbook_3
-logbook_3 = logbook_3*50//20000
 
 for i in range(logbook_3.size-1):
     np.save(circus + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])

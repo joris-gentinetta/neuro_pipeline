@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 # path = r'E:\anxiety_ephys\211\circus\phase_files/2021-03-13_mBWfus011_after_arena_ephys.npy'
 # a = np.load(path)
@@ -12,8 +14,32 @@ import numpy as np
 # for i in range(32):
 #     reordered[i] = b[pad.index(i+1)]
 # pass
+#
+# masked = np.ma.masked_array([1,2], mask=[False, True])
+# boolean = masked < 3
+# summe = boolean.sum()
+# pass
 
-masked = np.ma.masked_array([1,2], mask=[False, True])
-boolean = masked < 3
-summe = boolean.sum()
+
+
+# animal = '211'
+# index = 0
+# # folder preparation
+# animal_folder = r'E:/anxiety_ephys/' + animal + '/'
+# sub_folder = 'circus'
+# target_folder = animal_folder + sub_folder + '/'
+# experiment_names = os.listdir(target_folder + 'phase_files/')
+# phase = np.load(target_folder + 'phase_files/' + experiment_names[index] )
+# nfiles = np.load(target_folder + 'numpy_files/' + experiment_names[index] )
+#
+#
+# logbook = np.load(target_folder + 'logbook.npy')
+#
+# pass
+# a = np.array([1,2,3,4])
+# a = a[:2]
+# pass
+original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
+num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
+phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
 pass
