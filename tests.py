@@ -36,10 +36,12 @@ import numpy as np
 # logbook = np.load(target_folder + 'logbook.npy')
 #
 # pass
-# a = np.array([1,2,3,4])
-# a = a[:2]
-# pass
-original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
-num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
-phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
+a = np.array([0,2,3,4])
+b = a[:,None]
+c = np.arange(16).reshape((4,4))
+d = c/b
 pass
+# original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
+# num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
+# phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
+# pass

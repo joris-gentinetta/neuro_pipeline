@@ -7,7 +7,6 @@ import matplotlib as mpl
 import copy
 import pandas as pd
 
-
 make_path_visible = 0.0001
 idx = pd.IndexSlice
 
@@ -363,14 +362,14 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
 
     if do_archive:
         archive_transition_indices = [transition_index + video_trigger for transition_index in transitions[mode] if
-                              transition_index + video_trigger + 501 <= data.shape[
-                                  1] and transition_index + video_trigger - 500 >= 0]
+                                      transition_index + video_trigger + 501 <= data.shape[
+                                          1] and transition_index + video_trigger - 500 >= 0]
         tobearchived = np.zeros((data.shape[0], 1001, len(archive_transition_indices)))
         for tindex, transition_index in enumerate(archive_transition_indices):
             for unit in range(data.shape[0]):
-                tobearchived[unit,:, tindex] = data[unit, transition_index - 500:transition_index + 501]
-        tobearchived = np.mean(tobearchived, axis=2) - np.mean(data, axis=1)[:,None]
-        archive.loc[:,  idx[mode,:]] = tobearchived
+                tobearchived[unit, :, tindex] = data[unit, transition_index - 500:transition_index + 501]
+        tobearchived = np.mean(tobearchived, axis=2) - np.mean(data, axis=1)[:, None]
+        archive.loc[:, idx[mode, :]] = tobearchived
     if show or save:
         # for i in range(grid.shape[0]):
         #    grid[i] = gaussian_filter1d(grid[i], sigma=sigma)
@@ -380,10 +379,9 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
                 plt.bar(x, mean_std[i][0], yerr=mean_std[i][1], width=25)
             elif plotmode == 'percent':
                 mean = np.mean(mean_std[i][0])
-                if mean != 0:
-                    toplot = (mean_std[i][0] - mean) * 100 / mean
-                else:
-                    toplot = mean_std[i][0]
+                mean = np.where(mean != 0, mean, 1)
+                toplot = (mean_std[i][0] - mean) * 100 / mean
+
                 plt.bar(x, toplot, width=25)
             if save:
                 plt.savefig(file_name + str(cluster_names[i]) + '.jpg')
@@ -399,10 +397,13 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
         unit_sum = sum(grid[1:])
         sum_mean = np.mean(unit_sum, axis=0)
         sum_std = np.std(unit_sum, axis=0)
+        mean = np.mean(sum_mean)
+        if mean == 0:
+            mean = 1
         if plotmode == 'std':
             plt.bar(x, sum_mean, yerr=sum_std, width=25)
         elif plotmode == 'percent':
-            plt.bar(x, ((np.mean(data) != 0) * sum_mean / np.mean(data) + 0) * 100, width=25)
+            plt.bar(x, (sum_mean - mean) * 100 / mean, width=25)
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
         plt.title('firing rate all units')
@@ -413,11 +414,10 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
 
 
 def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-              cluster_names, archive, transition_size=2, minp=0, maxp=90, n=150, show=False, save=True, do_archive=True):
+              cluster_names, archive, transition_size=2, n=150, show=False, save=True, do_archive=True):
     movement = events['movement']
     mode = 'arms'
-    file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_minp' + str(minp) + '_maxp' + str(
-        maxp) + '_'
+    file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
 
     data = raw_data
     grid = np.zeros((n, n, data.shape[0]), dtype=np.float32)
@@ -487,7 +487,6 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
     if do_archive:
         archive.loc[:, idx['ROI_EZM', :]] = ROI
 
-
     if save or show:
         ROImean = np.mean(ROI[1:], axis=0)
         fig = plt.figure(figsize=(5, 5))
@@ -502,7 +501,8 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
     return archive
 
 
-def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names, archive,
+def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names,
+                 archive,
                  n=5, show=False, save=True, do_archive=True):
     movement = events['movement']
     mode = 'corners'
@@ -539,7 +539,10 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
             grid[d, 1:n - 1, i] = np.mean(grid[d, 1:n - 1, i])
         takenfrom = [(n - 1, 0), (0, 0), (0, n - 1), (n - 1, n - 1), (n - 1, 1), (1, 0), (0, 1), (1, n - 1), (1, 1)]
         for index in range(9):
-            ROI[i, index] = (grid[:, :, i][takenfrom[index]] - grid[:,:,i].mean()) * 100 / grid[:,:,i].mean()
+            mean = grid[:, :, i].mean()
+            if mean == 0:
+                mean = 1
+            ROI[i, index] = (grid[:, :, i][takenfrom[index]] - mean) * 100 / mean
 
         if save or show:
 
@@ -558,7 +561,10 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
     if do_archive:
         archive.loc[:, idx['ROI_OF', :]] = ROI
     if save or show:
-        unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / grid.mean()
+        mean = grid.mean()
+        if mean == 0:
+            mean = 1
+        unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / mean
         fig = plt.figure(figsize=(5, 5))
         plt.bar(np.arange(9), unit_sum)
         if save:
@@ -569,35 +575,39 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
         plt.close(fig)
     return archive
 
+
 def get_ezm_score(rois):
     mean = np.mean(rois, axis=1)
-    rois = (rois - mean[:,None]) / mean[:,None]
-    a1 = 0.25 * (np.abs(rois[:,5]-rois[:,4]) + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,7]-rois[:,7]) + np.abs(rois[:,7]-rois[:,6]))
-    b1 = 0.5 * (np.abs(rois[:,5]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6]))
-    open_close = (a1-b1)/(a1+b1)
+    mean = np.where(mean != 0, mean, 1)
+    rois = (rois - mean[:, None]) / mean[:, None]
+    a1 = 0.25 * (np.abs(rois[:, 5] - rois[:, 4]) + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(
+        rois[:, 7] - rois[:, 7]) + np.abs(rois[:, 7] - rois[:, 6]))
+    b1 = 0.5 * (np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 4] - rois[:, 6]))
+    open_close = (a1 - b1) / (a1 + b1)
 
-    a2 = 1/16 * (np.abs(rois[:,0]-rois[:,4]) + np.abs(rois[:,0]-rois[:,7])
-                 + np.abs(rois[:,0]-rois[:,6]) + np.abs(rois[:,0]-rois[:,5])
-                 + np.abs(rois[:,1]-rois[:,4]) + np.abs(rois[:,1]-rois[:,7])
-                 + np.abs(rois[:,1]-rois[:,6]) + np.abs(rois[:,1]-rois[:,5])
-                 + np.abs(rois[:,2]-rois[:,4]) + np.abs(rois[:,2]-rois[:,7])
-                 + np.abs(rois[:,2]-rois[:,6]) + np.abs(rois[:,2]-rois[:,5])
-                 + np.abs(rois[:,3]-rois[:,4]) + np.abs(rois[:,3]-rois[:,7])
-                 + np.abs(rois[:,3]-rois[:,6]) + np.abs(rois[:,3]-rois[:,5]))
-    b2 = 1/12 * (np.abs(rois[:,0]-rois[:,1]) + np.abs(rois[:,1]-rois[:,3])
-                 + np.abs(rois[:,1]-rois[:,2]) + np.abs(rois[:,0]-rois[:,3])
-                 + np.abs(rois[:,0]-rois[:,2]) + np.abs(rois[:,2]-rois[:,3])
-                 + np.abs(rois[:,4]-rois[:,7]) + np.abs(rois[:,4]-rois[:,6])
-                 + np.abs(rois[:,4]-rois[:,5]) + np.abs(rois[:,5]-rois[:,7])
-                 + np.abs(rois[:,5]-rois[:,6]) + np.abs(rois[:,6]-rois[:,7]))
-    crossing = (a2-b2)/(a2+b2)
-    closed = (rois[:, 5] + rois[:, 7])/2
-    transition = (rois[:, 0]+ rois[:, 1] + rois[:, 2]+ rois[:, 3])/4
+    a2 = 1 / 16 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 7])
+                   + np.abs(rois[:, 0] - rois[:, 6]) + np.abs(rois[:, 0] - rois[:, 5])
+                   + np.abs(rois[:, 1] - rois[:, 4]) + np.abs(rois[:, 1] - rois[:, 7])
+                   + np.abs(rois[:, 1] - rois[:, 6]) + np.abs(rois[:, 1] - rois[:, 5])
+                   + np.abs(rois[:, 2] - rois[:, 4]) + np.abs(rois[:, 2] - rois[:, 7])
+                   + np.abs(rois[:, 2] - rois[:, 6]) + np.abs(rois[:, 2] - rois[:, 5])
+                   + np.abs(rois[:, 3] - rois[:, 4]) + np.abs(rois[:, 3] - rois[:, 7])
+                   + np.abs(rois[:, 3] - rois[:, 6]) + np.abs(rois[:, 3] - rois[:, 5]))
+    b2 = 1 / 12 * (np.abs(rois[:, 0] - rois[:, 1]) + np.abs(rois[:, 1] - rois[:, 3])
+                   + np.abs(rois[:, 1] - rois[:, 2]) + np.abs(rois[:, 0] - rois[:, 3])
+                   + np.abs(rois[:, 0] - rois[:, 2]) + np.abs(rois[:, 2] - rois[:, 3])
+                   + np.abs(rois[:, 4] - rois[:, 7]) + np.abs(rois[:, 4] - rois[:, 6])
+                   + np.abs(rois[:, 4] - rois[:, 5]) + np.abs(rois[:, 5] - rois[:, 7])
+                   + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(rois[:, 6] - rois[:, 7]))
+    crossing = (a2 - b2) / (a2 + b2)
+    closed = (rois[:, 5] + rois[:, 7]) / 2
+    transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
     return open_close, crossing, closed, transition
 
 
 def get_of_score(rois):
     mean = np.mean(rois, axis=1)
+    mean = np.where(mean != 0, mean, 1)
     rois = (rois - mean[:, None]) / mean[:, None]
 
     a1 = 1 / 20 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 5])
@@ -623,10 +633,9 @@ def get_of_score(rois):
     of_corners_score = (a1 - b1) / (a1 + b1)
     of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
     a2 = 1 / 8 * (np.abs(rois[:, 8] - rois[:, 4]) + np.abs(rois[:, 8] - rois[:, 5])
-                   + np.abs(rois[:, 8] - rois[:, 6]) + np.abs(rois[:, 8] - rois[:, 7])
-                   + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 8])
-                   + np.abs(rois[:, 2] - rois[:, 8]) + np.abs(rois[:, 3] - rois[:, 8]))
-
+                  + np.abs(rois[:, 8] - rois[:, 6]) + np.abs(rois[:, 8] - rois[:, 7])
+                  + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 8])
+                  + np.abs(rois[:, 2] - rois[:, 8]) + np.abs(rois[:, 3] - rois[:, 8]))
 
     b2 = 1 / 28 * (np.abs(rois[:, 0] - rois[:, 1]) + np.abs(rois[:, 0] - rois[:, 2])
                    + np.abs(rois[:, 0] - rois[:, 3]) + np.abs(rois[:, 0] - rois[:, 4])
@@ -643,37 +652,39 @@ def get_of_score(rois):
                    + np.abs(rois[:, 4] - rois[:, 7]) + np.abs(rois[:, 5] - rois[:, 6])
                    + np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 6] - rois[:, 7]))
 
-
     of_middle_score = (a2 - b2) / (a2 + b2)
     of_middle = rois[:, 8]
     return of_corners_score, of_middle_score, of_corners, of_middle
 
-def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive, environment,
-          show, save, do_archive):
+
+def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
+               environment,
+               show, save, do_archive):
     offset = (physio_trigger + off) * 20000 // 50
     mode = 'phase'
     key = 'theta_phase_' + environment
     unit_keys = [key + '_' + str(vHIP_pad) for vHIP_pad in vHIP_pads]
     file_name = plot_folder + experiment_name + '_' + mode + '_'
     number_of_bins = 8
-    factor = 360//number_of_bins
-    phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:,offset:]//factor
-    original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:,offset:]
+    factor = 360 // number_of_bins
+    phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:, offset:] // factor
+    original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:, offset:]
     for i, unit in enumerate(cluster_names):
         mask = np.tile(np.invert(original_data[i]), (phase.shape[0], 1))
-        masked = np.ma.masked_array(phase, mask = mask)
+        masked = np.ma.masked_array(phase, mask=mask)
         phase_distribution = np.zeros((masked.shape[0], number_of_bins))
-        for angle in range(-180//factor, 180//factor):
-            phase_distribution[:, angle+180//factor] = np.sum(masked == angle, axis=1)
+        for angle in range(-180 // factor, 180 // factor):
+            phase_distribution[:, angle + 180 // factor] = np.sum(masked == angle, axis=1)
         mean = phase_distribution.mean(axis=1)
-        phase_distribution -= mean[:, None]
-        phase_distribution = phase_distribution * 100 / mean[:, None]
+        mean = np.where(mean != 0, mean, 1)
+        # phase_distribution -= mean[:, None]
+        phase_distribution = phase_distribution / mean[:, None]
         if do_archive:
             archive.loc[unit, idx[unit_keys, :]] = np.reshape(phase_distribution, -1)
         if save or show:
             for row, vHIP_pad in enumerate(vHIP_pads):
                 fig = plt.figure(figsize=(5, 5))
-                plt.bar(np.arange(-180//factor, 180//factor), phase_distribution[row], width=1)
+                plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution[row], width=1)
                 if save:
                     plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
                 if show:

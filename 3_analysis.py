@@ -3,7 +3,7 @@ animal = '012' #one of the sets with one day
 toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase]
 
-delete_plot_folder = True
+delete_plot_folder = False
 show = False
 save = True
 do_archive = True
@@ -44,10 +44,11 @@ if 'circus' in experiment_names:
 if os.path.exists(all_plots):
     if delete_plot_folder:
         shutil.rmtree(all_plots, ignore_errors=True)
+        time.sleep(5)
         os.mkdir(all_plots)
 else:
     os.mkdir(all_plots)
-time.sleep(5)
+
 cluster_names = np.load(target_folder + 'cluster_names.npy')
 vHIP_pads = np.load(target_folder + 'phase_files/' + 'vHIP_pads.npy')
 
