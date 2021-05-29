@@ -140,8 +140,8 @@ def plot_corners(overall_plots, animal, ROI, name, show=False, save=True):
 
 def plot_phase(overall_plots, animal, ROI, name, mode, show=False, save=True):
     file_name = overall_plots + animal + '_' + mode + '_' + name
-
-    ROImean = np.mean(ROI, axis=0)
+    normalized = ROI / np.mean(ROI, axis=1)[:, None]
+    ROImean = np.mean(normalized, axis=0)
     ROIstd = np.std(ROI, axis=0)
 
     fig = plt.figure(figsize=(5, 5))

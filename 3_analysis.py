@@ -1,13 +1,12 @@
 
 animal = '012' #one of the sets with one day
-toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+toplot = ['phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase]
 
 delete_plot_folder = False
-show = False
-save = True
-do_archive = True
-
+show = True
+save = False
+do_archive = False
 import copy
 import pandas as pd
 import os
@@ -32,8 +31,9 @@ target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
 framerate = 50
 
-number_of_bins = 8
-factor = 360//number_of_bins
+number_of_bins_transitions = 40 #in 10 second window around transitions
+number_of_bins_phase = 8 #phaseplot
+#factor = 360//number_of_bins_phase
 
 animal_folder = data_folder + animal + '/'
 experiment_names = os.listdir(animal_folder)
@@ -55,47 +55,46 @@ vHIP_pads = np.load(target_folder + 'phase_files/' + 'vHIP_pads.npy')
 level_1 = ['characteristics' for _ in range(12)] \
           + ['ROI_EZM' for _ in range(8)] \
           + ['ROI_OF' for _ in range(9)] \
-          + ['open_closed_entrytime' for _ in range(1001)] \
-          + ['open_closed_exittime' for _ in range(1001)] \
-          + ['closed_open_entrytime' for _ in range(1001)] \
-          + ['closed_open_exittime' for _ in range(1001)]\
-          + ['lingering_entrytime' for _ in range(1001)] \
-          + ['lingering_exittime' for _ in range(1001)] \
-          + ['prolonged_open_closed_entrytime' for _ in range(1001)] \
-          + ['prolonged_open_closed_exittime' for _ in range(1001)] \
-          + ['prolonged_closed_open_entrytime' for _ in range(1001)]\
-          + ['prolonged_closed_open_exittime' for _ in range(1001)]\
-          + ['withdraw_entrytime' for _ in range(1001)]\
-          + ['withdraw_exittime' for _ in range(1001)] \
-          + ['nosedip_starttime' for _ in range(1001)] \
-          + ['nosedip_stoptime' for _ in range(1001)]
+          + ['open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
+          + ['open_closed_exittime' for _ in range(number_of_bins_transitions)] \
+          + ['closed_open_entrytime' for _ in range(number_of_bins_transitions)] \
+          + ['closed_open_exittime' for _ in range(number_of_bins_transitions)]\
+          + ['lingering_entrytime' for _ in range(number_of_bins_transitions)] \
+          + ['lingering_exittime' for _ in range(number_of_bins_transitions)] \
+          + ['prolonged_open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
+          + ['prolonged_open_closed_exittime' for _ in range(number_of_bins_transitions)] \
+          + ['prolonged_closed_open_entrytime' for _ in range(number_of_bins_transitions)]\
+          + ['prolonged_closed_open_exittime' for _ in range(number_of_bins_transitions)]\
+          + ['withdraw_entrytime' for _ in range(number_of_bins_transitions)]\
+          + ['withdraw_exittime' for _ in range(number_of_bins_transitions)] \
+          + ['nosedip_starttime' for _ in range(number_of_bins_transitions)] \
+          + ['nosedip_stoptime' for _ in range(number_of_bins_transitions)]
 
 for pad in vHIP_pads:
-    level_1 += ['theta_phase_OFT_' + str(pad) for _ in range(number_of_bins)]
-    level_1 += ['theta_phase_EZM_' + str(pad) for _ in range(number_of_bins)]
-    level_1 += ['theta_phase_before_' + str(pad) for _ in range(number_of_bins)]
-    level_1 += ['theta_phase_after_' + str(pad) for _ in range(number_of_bins)]
+    level_1 += ['theta_phase_OFT_' + str(pad) for _ in range(number_of_bins_phase)]
+    level_1 += ['theta_phase_EZM_' + str(pad) for _ in range(number_of_bins_phase)]
+    level_1 += ['theta_phase_before_' + str(pad) for _ in range(number_of_bins_phase)]
+    level_1 += ['theta_phase_after_' + str(pad) for _ in range(number_of_bins_phase)]
 
 
 
-five_sec_range = list(np.arange(-500, 501))
-ranges = copy.copy(five_sec_range)
+five_sec_range = list(np.arange(number_of_bins_transitions))
+transition_ranges = copy.copy(five_sec_range)
 for i in range(13):
-    ranges.extend(five_sec_range)
-degree360 = list(np.arange(-180//factor,180//factor))
+    transition_ranges.extend(five_sec_range)
+degree360 = list(np.arange(number_of_bins_phase))
 phase_ranges = copy.copy(degree360)
 for i in range(4*len(vHIP_pads)):
-    phase_ranges.extend(five_sec_range)
+    phase_ranges.extend(degree360)
 level_2 = ['ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
            'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
           + [i for i in range(8)] \
           + [i for i in range(9)] \
-          + ranges \
+          + transition_ranges \
           + phase_ranges
 tuples = list(zip(level_1, level_2))
 columns = pd.MultiIndex.from_tuples(tuples)
-if do_archive:
-    archive = pd.DataFrame(index=cluster_names, columns=columns)
+archive = pd.DataFrame(index=cluster_names, columns=columns)
 
 for experiment_name in experiment_names:
 
@@ -150,7 +149,7 @@ for experiment_name in experiment_names:
     if 'phase' in toplot:
         archive = plots.plot_phase(vHIP_pads, target_folder, plot_folder, experiment_name, off,
                               physio_trigger,
-                              cluster_names, archive, environment, show=show, save=save, do_archive=do_archive)
+                              cluster_names, archive, environment, number_of_bins = number_of_bins_phase, show=show, save=save, do_archive=do_archive)
     #################################
     if environment == 'EZM':
         if 'raw' in toplot:
@@ -168,11 +167,11 @@ for experiment_name in experiment_names:
             for mode in transition_keys:
                 # plotmode is one of ['std', 'percent']
                 archive = plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive,
-                                       mode=mode, plotmode='percent', n=200, m=5, show=show, save=save, do_archive=do_archive)
+                                       mode=mode, n=200, number_of_bins=number_of_bins_transitions, show=show, save=save, do_archive=do_archive)
         if 'statistics' in toplot:
             archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
-                            cluster_names, archive, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save, do_archive=do_archive)
+                            cluster_names, archive, transition_size=5, n=150, show=show, save=save, do_archive=do_archive)
 
     elif environment == 'OFT':
         if 'raw' in toplot:
@@ -198,6 +197,6 @@ for experiment_name in experiment_names:
         elif environment == 'OFT':
             archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
             archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
-
-archive.to_pickle(target_folder + 'archive')
+if do_archive:
+    archive.to_pickle(target_folder + 'archive')
 pass

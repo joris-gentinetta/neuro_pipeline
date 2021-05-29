@@ -338,86 +338,69 @@ def plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off
     plt.close(fig)
     return
 
-
+#controlled and commented
+#plots the z score of the firing rate for every unit, and the mean of the z scores of all units
 def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive, mode,
-                     plotmode='percent', n=500, m=5, show=False, save=True, do_archive=True):
+                     n=500, number_of_bins=5, show=False, save=True, do_archive=True):
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
-
     data = raw_data
-    x = np.arange(-n, n + 1, (2 * n + 1) // (m - 1))
+
+    downsampled = np.empty((data.shape[0], data.shape[1] // (2* n + 1) * number_of_bins))
+    for step in range(downsampled.shape[1]):
+        downsampled[:,step] = np.mean(data[:,step * (2*n + 1) // number_of_bins:(step+1) * (2*n + 1) // number_of_bins])
+
+    x = np.arange(-n, n + 1, (2 * n + 1) // (number_of_bins - 1)) #labels for bar plot
     transitions = events['transitions']
+
     transition_indices = [transition_index + video_trigger for transition_index in transitions[mode] if
-                          transition_index + video_trigger + n + 1 <= data.shape[
-                              1] and transition_index + video_trigger - n >= 0] #create valid indices
-    grid = [np.zeros((len(transition_indices), m), dtype=np.float32) for _ in range(data.shape[0])] #list, every entry corresponds to one unit and contains a nparray with:
-    # rows: indices, columns: m pooled values around indices
-
-    for tindex, transition_index in enumerate(transition_indices): #fill grid with values
-        for unit in range(data.shape[0]):
-            for timeindex in range(m):
-                grid[unit][tindex, timeindex] = np.mean(data[unit, transition_index - n:transition_index + n + 1][
-                                                        (2 * n + 1) * timeindex // n: (2 * n + 1) * (
-                                                                timeindex + 1) // n]) - np.mean(data[unit])
-
-    mean_std = [np.zeros((2, m)) for _ in range(data.shape[0])]
-    for unit in range(data.shape[0]):
-        mean_std[unit][0] = np.mean(grid[unit], axis=0)
-        mean_std[unit][1] = np.std(grid[unit], axis=0)
-
+                                  transition_index + video_trigger + n + 1 <= data.shape[
+                                      1] and transition_index + video_trigger - n >= 0]
+    binned = np.zeros((data.shape[0], number_of_bins, len(transition_indices))) #unit, bar, transition_index
+    for tindex, transition_index in enumerate(transition_indices):
+            for bar in range(number_of_bins):
+                #take mean of all firingrates within bins(bars)
+                binned[:, bar, tindex] = np.mean(data[:, transition_index - n:transition_index + n + 1][:,
+                                                        (2 * n + 1) * bar // number_of_bins: (2 * n + 1) * (bar + 1) // number_of_bins], axis=1)
+    mean_of_population = np.mean(binned, axis=2) #mean of all transitons
+    mean_of_all = np.mean(downsampled, axis=1)[:, None] #mean of recording
+    std_of_population = np.std(binned, axis=2)
+    std_of_all = np.std(downsampled, axis=1)[:, None]
+    n_of_samples = binned.shape[2]
+    z_scores =  (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all #compute z score
+    sem = std_of_population / np.sqrt(n_of_samples) # compute SEM (stadard error of the mean)
     if do_archive:
-        archive_transition_indices = [transition_index + video_trigger for transition_index in transitions[mode] if
-                                      transition_index + video_trigger + 501 <= data.shape[
-                                          1] and transition_index + video_trigger - 500 >= 0]
-        tobearchived = np.zeros((data.shape[0], 1001, len(archive_transition_indices))) #unit, 1001, index
-        for tindex, transition_index in enumerate(archive_transition_indices):
-            for unit in range(data.shape[0]):
-                tobearchived[unit, :, tindex] = data[unit, transition_index - 500:transition_index + 501]
-        tobearchived = np.mean(tobearchived, axis=2) - np.mean(data, axis=1)[:, None]
-        archive.loc[:, idx[mode, :]] = tobearchived
+        archive.loc[:, idx[mode, :]] = z_scores #savez scores to archive
     if show or save:
-        # for unit in range(grid.shape[0]):
-        #    grid[unit] = gaussian_filter1d(grid[unit], sigma=sigma)
         for unit in range(data.shape[0]):
             fig = plt.figure(figsize=(5, 5))
-            if plotmode == 'std':
-                plt.bar(x, mean_std[unit][0], yerr=mean_std[unit][1], width=25)
-            elif plotmode == 'percent':
-                mean = np.mean(mean_std[unit][0])
-                mean = np.where(mean != 0, mean, 1)
-                toplot = (mean_std[unit][0] - mean) * 100 / mean
-
-                plt.bar(x, toplot, width=25)
+            plt.bar(x, z_scores[unit], yerr=sem[unit], width=25)
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
-
             if unit != 0:
-                plt.title('firing rate unit ' + str(cluster_names[unit]))
+                plt.title('z-score unit ' + str(cluster_names[unit]))
             else:
-                plt.title('firing rate all mua')
+                plt.title('z-score all mua')
             if show:
                 plt.show()
             plt.close(fig)
-
-        unit_sum = sum(grid[1:])
-        sum_mean = np.mean(unit_sum, axis=0)
-        sum_std = np.std(unit_sum, axis=0)
-        mean = np.mean(sum_mean)
-        if mean == 0:
-            mean = 1
-        if plotmode == 'std':
-            plt.bar(x, sum_mean, yerr=sum_std, width=25)
-        elif plotmode == 'percent':
-            plt.bar(x, (sum_mean - mean) * 100 / mean, width=25)
+        mean_of_units = np.mean(z_scores, axis=0)
+        std_of_units = np.mean(z_scores, axis=0)
+        n_of_units = z_scores.shape[0]
+        sem_of_units = std_of_units / np.sqrt(n_of_units)
+        plt.bar(x, mean_of_units, yerr=sem_of_units, width=25)
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
-        plt.title('firing rate all units')
+
         if show:
+            plt.title('z-score all units')
             plt.show()
         plt.close(fig)
     return archive
 
 # controlled and well commented
+# used for EZM
 # plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
+# plots the mean of all single unit plots
 # fills archive['ROI_EZM']
 def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
               cluster_names, archive, transition_size=2, n=150, show=False, save=True, do_archive=True):
@@ -512,7 +495,11 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
         plt.close(fig)
     return archive
 
-
+#controlled and commented
+#used for EZM
+# plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
+# plots the mean of all single unit plots
+# fills archive['ROI_OF']
 def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names,
                  archive,
                  n=5, show=False, save=True, do_archive=True):
@@ -531,7 +518,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
     sx = sy = 350
     xyv[0] += 6
     xyv[1] += 6
-    ROI = np.zeros((data.shape[0], 9))
+    ROI = np.zeros((data.shape[0], 9)) #rows: units, columns: ROIs
 
     for unit in range(data.shape[0]):
         xyv[2] = data[unit][physio_trigger + off: xyv.shape[1] + physio_trigger + off] + make_path_visible
@@ -543,40 +530,38 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
                 bsum = np.sum(boolean)
                 if bsum != 0:
                     grid[x, y, unit] = np.sum(xyv[2][boolean]) / bsum
-
+        #make grid structure like in grid plot:
         for d in range(n):
             grid[1:n - 1, d, unit] = np.mean(grid[1:n - 1, d, unit])
 
         for d in range(n):
             grid[d, 1:n - 1, unit] = np.mean(grid[d, 1:n - 1, unit])
+        #now every point within a ROI contains the mean firingrate of the ROI it belongs tog
+        #take one point from every ROI:
         takenfrom = [(n - 1, 0), (0, 0), (0, n - 1), (n - 1, n - 1), (n - 1, 1), (1, 0), (0, 1), (1, n - 1), (1, 1)]
         for index in range(9):
             mean = grid[:, :, unit].mean()
             if mean == 0:
                 mean = 1
-            ROI[unit, index] = (grid[:, :, unit][takenfrom[index]] - mean) * 100 / mean
-
+            ROI[unit, index] = (grid[:, :, unit][takenfrom[index]] - mean) * 100 / mean #assign percent difference to unit mean to every ROI
         if save or show:
 
             fig = plt.figure(figsize=(5, 5))
-            plt.bar(np.arange(9), ROI[unit])
+            plt.bar(np.arange(9), ROI[unit]) #arrangement of the ROIs: {0: 'top right', 1: 'top left', 2: 'bottom left',
+                                             # 3: 'bottom right', 4: 'right', 5: 'top', 6: 'left', 7: 'bottom', 8: 'middle'}
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
-
-            if unit != 0:
-                plt.title('firing rate unit ' + str(cluster_names[unit]))
-            else:
-                plt.title('firing rate all mua')
             if show:
+                if unit != 0:
+                    plt.title('firing rate unit ' + str(cluster_names[unit]))
+                else:
+                    plt.title('firing rate all mua')
                 plt.show()
             plt.close(fig)
     if do_archive:
         archive.loc[:, idx['ROI_OF', :]] = ROI
-    if save or show:
-        mean = grid.mean()
-        if mean == 0:
-            mean = 1
-        unit_sum = (np.mean(ROI[1:], axis=0) - grid.mean()) * 100 / mean
+    if save or show: #plot mean of all single unit plots
+        unit_sum = (np.mean(ROI[1:], axis=0))
         fig = plt.figure(figsize=(5, 5))
         plt.bar(np.arange(9), unit_sum)
         if save:
@@ -587,7 +572,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
         plt.close(fig)
     return archive
 
-
+#computes the EZM score
 def get_ezm_score(rois):
     mean = np.mean(rois, axis=1)
     mean = np.where(mean != 0, mean, 1)
@@ -616,7 +601,7 @@ def get_ezm_score(rois):
     transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
     return open_close, crossing, closed, transition
 
-
+#computes the OF score
 def get_of_score(rois):
     mean = np.mean(rois, axis=1)
     mean = np.where(mean != 0, mean, 1)
@@ -667,36 +652,39 @@ def get_of_score(rois):
     of_middle_score = (a2 - b2) / (a2 + b2)
     of_middle = rois[:, 8]
     return of_corners_score, of_middle_score, of_corners, of_middle
-
-
+#controlled and commented
+#plot number of spikes per range of phases for every unit
+#plot plot average number of spikes per range of phases, where every unit contributes the same
+#makes theta_phase of archive
 def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
-               environment,
+               environment, number_of_bins,
                show, save, do_archive):
     offset = (physio_trigger + off) * 20000 // 50
     mode = 'phase'
     key = 'theta_phase_' + environment
-    unit_keys = [key + '_' + str(vHIP_pad) for vHIP_pad in vHIP_pads]
+    unit_keys = [key + '_' + str(vHIP_pad) for vHIP_pad in vHIP_pads] #column of archive to save to
     file_name = plot_folder + experiment_name + '_' + mode + '_'
-    number_of_bins = 8
-    factor = 360 // number_of_bins
-    phase = np.load(circus + 'phase_files/' + experiment_name + '.npy')[:, offset:] // factor
+    # phase angle in range(0,number of bins):
+    phase = (np.load(circus + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180) * number_of_bins // 360
     original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:, offset:]
     for i, unit in enumerate(cluster_names):
-        mask = np.tile(np.invert(original_data[i]), (phase.shape[0], 1))
+        mask = np.tile(np.invert(original_data[i]), (phase.shape[0], 1))  #mask phase values where no spike ocurred
         masked = np.ma.masked_array(phase, mask=mask)
-        phase_distribution = np.zeros((masked.shape[0], number_of_bins))
-        for angle in range(-180 // factor, 180 // factor):
-            phase_distribution[:, angle + 180 // factor] = np.sum(masked == angle, axis=1)
-        mean = phase_distribution.mean(axis=1)
-        mean = np.where(mean != 0, mean, 1)
+        binned = np.zeros((masked.shape[0], number_of_bins))
+#         for angle in range(-180 , 180):
+#             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)
+        for bin in range(number_of_bins):
+            binned[:, bin] =  np.sum(masked == bin, axis=1) #slow part
+        mean = binned.mean(axis=1)
+        #mean = np.where(mean != 0, mean, 1)
         # phase_distribution -= mean[:, None]
-        phase_distribution = phase_distribution / mean[:, None]
+        binned_normalized = binned / mean[:, None]
         if do_archive:
-            archive.loc[unit, idx[unit_keys, :]] = np.reshape(phase_distribution, -1)
+            archive.loc[unit, idx[unit_keys, :]] = np.reshape(binned, -1)
         if save or show:
             for row, vHIP_pad in enumerate(vHIP_pads):
                 fig = plt.figure(figsize=(5, 5))
-                plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution[row], width=1)
+                plt.bar(np.arange( number_of_bins), binned[row], width=1)
                 if save:
                     plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
                 if show:
@@ -708,7 +696,7 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
                 plt.close(fig)
 
             fig = plt.figure(figsize=(5, 5))
-            plt.bar(np.arange(-180 // factor, 180 // factor), phase_distribution.mean(axis=0), width=1)
+            plt.bar(np.arange(number_of_bins), binned_normalized.mean(axis=0)*binned.mean(), width=1)
             if save:
                 plt.savefig(file_name + '_unit_' + str(unit) + 'all_pads.jpg')
             if show:
