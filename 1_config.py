@@ -1,7 +1,7 @@
-## only cell to adapt
-animal = '012'
-max_impedance = 2000000
+animal = '211'
+max_impedance = 250000
 max_channel = 33
+select_channels = True
 
 import numpy as np
 from load_intan_rhd_format.load_intan_rhd_format import read_data
@@ -55,8 +55,6 @@ templates = r'E:/pipe/spykingcircus_sorter_2/templates/'
 param_file = target_folder + 'dat_files/' + experiment_names[0] + '_0.params'
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat'
 
-
-
 # get common channels, create trigger files
 for index, data_folder in enumerate(data_folders):
     rhd_folder = data_folder + 'ephys/'
@@ -85,9 +83,64 @@ for i in range(64):
 mPFC_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 < max_channel]
 vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 >= max_channel]
 
+data_folder = data_folders[-1]
+rhd_folder = data_folder + 'ephys/'
+rhd_files = os.listdir(rhd_folder)
+amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']  # time: 02:28min for 25 files
+channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels]
+mPFC_indices = [channel_list.index(valid_channel) for valid_channel in mPFC_channels]
+vHIP_indices = [channel_list.index(valid_channel) for valid_channel in vHIP_channels]
+amp_channels = np.array(amp_channels)
+mPFC_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[mPFC_indices]]
+vHIP_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[vHIP_indices]]
+if select_channels:
+    rhd_file = rhd_files[1]
+    rhd_data = np.array(read_data(rhd_folder + rhd_file)['amplifier_data'], dtype=np.int16)
+    mPFC_data = rhd_data[mPFC_indices]
+    vHIP_data = rhd_data[vHIP_indices]
+    sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
+    spike_filtered = sosfilt(sos_spike, mPFC_data - np.median(mPFC_data, axis=0)[None, :], axis=1)
+    toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9]
+    fig = plt.figure(figsize=(20, 30))
+    gs = fig.add_gridspec(toplot.shape[0], hspace=0)
+    axs = gs.subplots(sharex=True, sharey=True)
+    for row, ax in tqdm(enumerate(axs)):
+        label = 'channel: ' + str(mPFC_channels[row]) + ', ' + str(
+            mPFC_impedance[row] * 100 // max_impedance) + '% max impedance'
+        ax.plot(toplot[row], label=label, linewidth=1)
+        ax.legend(loc='upper right')
+    plt.ylim(-50, 50)
+    fig.suptitle('mPFC channels', size=100)
+    plt.show()
+    plt.close(fig)
+    spike_filtered = sosfilt(sos_spike, vHIP_data - np.median(vHIP_data, axis=0)[None, :], axis=1)
+    spike_filtered = spike_filtered - np.median(spike_filtered, axis=0)[None, :]
+
+    toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9]
+    fig = plt.figure(figsize=(20, 30))
+    gs = fig.add_gridspec(toplot.shape[0], hspace=0)
+    axs = gs.subplots(sharex=True, sharey=True)
+    for row, ax in tqdm(enumerate(axs)):
+        label = 'channel: ' + str(vHIP_channels[row]) + ', ' + str(
+            vHIP_impedance[row] * 100 // max_impedance) + '% max impedance'
+        ax.plot(toplot[row], label=label, linewidth=1)
+        ax.legend(loc='upper right')
+    plt.ylim(-50, 50)
+    fig.suptitle('vHIP channels', size=100)
+    plt.show()
+    plt.close(fig)
+    discarded_channels = np.array(input('discarded channels seperated by space: ').split(), dtype=np.int8)
+    for discarded_channel in discarded_channels:
+        if discarded_channel in mPFC_channels:
+            mPFC_channels.remove(discarded_channel)
+        elif discarded_channel in vHIP_channels:
+            vHIP_channels.remove(discarded_channel)
+    np.save(target_folder + 'discarded_channels', discarded_channels)
+mPFC_channels = list(np.array(mPFC_channels)[np.array(mPFC_impedance) < max_impedance])
+vHIP_channels = list(np.array(vHIP_channels)[np.array(vHIP_impedance) < max_impedance])
 # pads[x] denotes the pad corresponding to data['amplifier_data'][x]
-mPFC_pads = [pta[channel] + 1 for channel in mPFC_channels]
-vHIP_pads = [pta[channel] + 1 for channel in vHIP_channels]
+mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels]
+vHIP_pads = [pta.index(channel) + 1 for channel in vHIP_channels]
 np.save(target_folder + 'phase_files/' + 'vHIP_pads', vHIP_pads)
 np.save(target_folder + 'numpy_files/' + 'mPFC_pads', mPFC_pads)
 # probe file 'graph'
@@ -104,8 +157,8 @@ for i in range(len(mPFC_pads)):
 total_nb_channels = len(mPFC_channels)
 channels = list(np.arange(0, total_nb_channels))
 
-#create .dat files
-#15min
+# create .dat files
+# 15min
 start = time.time()
 logbook = np.zeros(len(experiment_names))
 for index, data_folder in tqdm(enumerate(data_folders)):
@@ -126,74 +179,22 @@ for index, data_folder in tqdm(enumerate(data_folders)):
         mPFC_concatenated[:, total_size:total_size + mPFC_data.shape[1]] = mPFC_data
         vHIP_concatenated[:, total_size:total_size + vHIP_data.shape[1]] = vHIP_data
         total_size += vHIP_data.shape[1]
-    mPFC_concatenated = mPFC_concatenated[:,:total_size]
-    vHIP_concatenated = vHIP_concatenated[:,:total_size]
+    mPFC_concatenated = mPFC_concatenated[:, :total_size]
+    vHIP_concatenated = vHIP_concatenated[:, :total_size]
     # raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
     sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfilt(sos_theta, vHIP_concatenated, axis=1)
-    spike_filtered = sosfilt(sos_spike, mPFC_concatenated, axis=1)
+    spike_filtered = sosfilt(sos_spike, mPFC_concatenated - np.median(mPFC_concatenated, axis=0)[None, :], axis=1)
     hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
     data_for_spikesorting = np.transpose(mPFC_concatenated)
+    # save files:
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
     np.save(target_folder + 'phase_files/' + experiment_names[index], hilbert_phase)
     np.save(target_folder + 'numpy_files/' + experiment_names[index], spike_filtered)
-
     logbook[index] = total_size
 np.save(target_folder + 'logbook', logbook)
 end = time.time()
-
-# # prepare data for plotting
-# rhd_folder = data_folders[0] + 'ephys/'
-# rhd_files = os.listdir(rhd_folder)
-# x = np.array(read_data(rhd_folder + rhd_files[0])['amplifier_data'], dtype=np.int16)[mPFC_indices]
-# mPFC = np.zeros(x.shape[1], dtype=np.int16)
-# n_mPFC = 0
-# vH = np.zeros(x.shape[1], dtype=np.int16)
-# n_vH = 0
-# for i in range(x.shape[0]):
-#     if mPFC_pads[i] < 33:
-#         mPFC += x[i]
-#         n_mPFC += 1
-#     else:
-#         vH += x[i]
-#         n_vH += 1
-# for i in range(x.shape[0]):
-#     if mPFC_pads[i] < 33:
-#         x[i] = (x[i] - mPFC / n_mPFC).astype(np.int16)
-#
-#     else:
-#         x[i] = (x[i] - vH / n_vH).astype(np.int16)
-#
-# # plot channels
-# lw = 0.4
-# d = x[:, x.shape[1] // 10 * 8:x.shape[1] // 10 * 9]
-# zero = np.zeros(d.shape[1])
-# frontier = [1 if i % 2 == 0 else 0 for i in range(d.shape[1])]
-# fig = plt.figure(figsize=(20, 30))
-# gs = fig.add_gridspec(64, hspace=0)
-# axs = gs.subplots(sharex=True, sharey=True)
-# for i, ax in tqdm(enumerate(axs)):
-#     for ind in range(64):
-#         if ind >= len(mPFC_pads):
-#             if i == 31:
-#                 ax.plot(zero, label='0, frontier', linewidth=lw)
-#             else:
-#                 ax.plot(zero, label='0', linewidth=lw)
-#         elif mPFC_pads[ind] == i + 1:
-#             if i == 31:
-#                 if amp_channels[ind]['electrode_impedance_magnitude'] > max_impedance:
-#                     ax.plot(d[ind], label=str(ind) + ', impedance' + ', frontier', linewidth=lw)
-#                 else:
-#                     ax.plot(d[ind], label=str(ind) + ', frontier', linewidth=lw)
-#             else:
-#                 if amp_channels[ind]['electrode_impedance_magnitude'] > max_impedance:
-#                     ax.plot(d[ind], label=str(ind) + ', impedance', linewidth=lw)
-#                 else:
-#                     ax.plot(d[ind], label=str(ind), linewidth=lw)
-#     ax.legend(loc='upper right')
-# plt.ylim(-150, 150)
-# plt.show()
 
 # prepare probe.prb file
 radius = 100

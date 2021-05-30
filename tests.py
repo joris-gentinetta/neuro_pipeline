@@ -40,10 +40,24 @@ import numpy as np
 # b = np.array([[True, True, False, True], [True, False, False, True]])
 # c = a[b]
 # q = np.load(r'E:\anxiety_ephys\012\circus\cluster_names.npy')
-a = np.array([])
-b = np.mean(a)
-pass
+# a = np.array([])
+# b = np.mean(a)
+# pass
 # original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
 # num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
 # phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
 # pass
+import pandas as pd
+animal = '211'
+sorter = 'circus'
+data_folder = r'E:/anxiety_ephys/'
+target_folder = data_folder + animal + '/' + sorter + '/'
+# archive = pd.read_pickle(target_folder + 'archive.pkl')
+# score = archive.loc[:,('characteristics', 'ezm_closed_score')]
+# median = np.median(score)
+pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
+pass
+
+a = [1,2,3]
+b =  a[[2,0]]
+pass

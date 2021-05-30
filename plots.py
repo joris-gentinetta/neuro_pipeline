@@ -369,7 +369,7 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
     z_scores =  (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all #compute z score
     sem = std_of_population / np.sqrt(n_of_samples) # compute SEM (stadard error of the mean)
     if do_archive:
-        archive.loc[:, idx[mode, :]] = z_scores #savez scores to archive
+        archive.loc[:, idx[mode, :]] = z_scores #save z scores to archive
     if show or save:
         for unit in range(data.shape[0]):
             fig = plt.figure(figsize=(5, 5))

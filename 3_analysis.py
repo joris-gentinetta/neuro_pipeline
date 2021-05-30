@@ -1,12 +1,14 @@
 
 animal = '012' #one of the sets with one day
-toplot = ['phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
-             # for full archive need at least ['transitions', 'statistics', 'phase]
+toplot = ['transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+             # for full archive need at least ['transitions', 'statistics', 'phase']
 
 delete_plot_folder = False
-show = True
+delete_archive = True
+show = False
 save = False
-do_archive = False
+do_archive = True
+
 import copy
 import pandas as pd
 import os
@@ -94,7 +96,10 @@ level_2 = ['ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transi
           + phase_ranges
 tuples = list(zip(level_1, level_2))
 columns = pd.MultiIndex.from_tuples(tuples)
-archive = pd.DataFrame(index=cluster_names, columns=columns)
+if os.path.exists(target_folder + 'archive.pkl') and not delete_archive:
+    archive = pd.read_pickle(target_folder + 'archive.pkl')
+else:
+    archive = pd.DataFrame(index=cluster_names, columns=columns)
 
 for experiment_name in experiment_names:
 
@@ -151,6 +156,7 @@ for experiment_name in experiment_names:
                               physio_trigger,
                               cluster_names, archive, environment, number_of_bins = number_of_bins_phase, show=show, save=save, do_archive=do_archive)
     #################################
+
     if environment == 'EZM':
         if 'raw' in toplot:
             plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
@@ -198,5 +204,5 @@ for experiment_name in experiment_names:
             archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
             archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
 if do_archive:
-    archive.to_pickle(target_folder + 'archive')
+    archive.to_pickle(target_folder + 'archive.pkl')
 pass
