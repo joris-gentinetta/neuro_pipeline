@@ -1,4 +1,4 @@
-animal = '012'
+animal = '211'
 
 
 import h5py
@@ -83,3 +83,4 @@ for i in range(logbook_3.size-1):
     np.save(circus + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
     np.save(circus + 'original_' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
 
+print('post processing for animal {} done!'.format(animal))

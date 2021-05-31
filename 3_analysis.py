@@ -1,12 +1,12 @@
 
-animal = '012' #one of the sets with one day
-toplot = ['transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+animal = '211' #one of the sets with one day
+toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase']
 
-delete_plot_folder = False
+delete_plot_folder = True
 delete_archive = True
 show = False
-save = False
+save = True
 do_archive = True
 
 import copy
@@ -21,7 +21,10 @@ import plots
 transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                   'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
                   'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
-                  'nosedip_starttime', 'nosedip_stoptime']
+                  'nosedip_starttime', 'nosedip_stoptime'] #subselection of ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
+                  # 'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
+                  # 'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
+                  # 'nosedip_starttime', 'nosedip_stoptime']
 
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -86,7 +89,7 @@ for i in range(13):
     transition_ranges.extend(five_sec_range)
 degree360 = list(np.arange(number_of_bins_phase))
 phase_ranges = copy.copy(degree360)
-for i in range(4*len(vHIP_pads)):
+for i in range(4*len(vHIP_pads)-1):
     phase_ranges.extend(degree360)
 level_2 = ['ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
            'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
@@ -205,4 +208,7 @@ for experiment_name in experiment_names:
             archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
 if do_archive:
     archive.to_pickle(target_folder + 'archive.pkl')
-pass
+
+
+print('analysis for animal {} done!'.format(animal))
+

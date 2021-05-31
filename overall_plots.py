@@ -69,7 +69,7 @@ def plot_grid(overall_plots, animal, ROI, name, show=False, save=True):
     if save:
         plt.savefig(file_name + '.jpg')
     if show:
-        plt.title('ROI ' + animal)
+        plt.title('ROI(OF) ' + animal)
         plt.show()
     plt.close(fig)
     return
@@ -77,7 +77,6 @@ def plot_grid(overall_plots, animal, ROI, name, show=False, save=True):
 #corrected and commented
 #barplot with mean of z scores of selected units for timebins around transition, error bars: SEM
 def plot_transitions(overall_plots, animal, transition_window, name, mode, show=False, save=True):
-    plotmode = 'std'
     file_name = overall_plots + animal + '_' + mode + '_' + name
 
     mean = np.mean(transition_window, axis=0)

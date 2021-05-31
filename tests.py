@@ -48,16 +48,19 @@ import numpy as np
 # phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
 # pass
 import pandas as pd
+import pickle
 animal = '211'
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
-# archive = pd.read_pickle(target_folder + 'archive.pkl')
-# score = archive.loc[:,('characteristics', 'ezm_closed_score')]
-# median = np.median(score)
-pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
-pass
-
-a = [1,2,3]
-b =  a[[2,0]]
+experiment_name = '2021-03-13_mBWfus011_before_arena_ephys'
+# # archive = pd.read_pickle(target_folder + 'archive.pkl')
+# # score = archive.loc[:,('characteristics', 'ezm_closed_score')]
+# # median = np.median(score)
+# pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
+animal =  '00'
+#phase = (np.load(target_folder + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180)
+path = r'E:\anxiety_ephys\211\2021-03-13_mBWfus011_before_arena_ephys\ephys_processed/2021-03-13_mBWfus011_before_arena_ephys_dataset.pkl'
+with open(path, 'rb') as f:
+    phase_from_file = pickle.load(f)
 pass

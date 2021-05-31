@@ -1,11 +1,11 @@
-animal = '012'  # one of the sets with one day
+animal = '211'  # one of the sets with one day
 score = 'ezm_transition_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score']
 threshold = 0  # recommended: [0                     ,  x                    ,  x                ,  x               ]
 data_separation = ['over_threshold_plus',
                    'over_threshold_minus']  # selection of ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
 # 'under_threshold_minus', 'over_threshold_minus':]
 
-#significance plus/minus: plus['ezm_closed_score': firing rate higer in closed area ,
+#significance plus/minus: plus['ezm_closed_score': firing rate higer in closed area,
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
 # 'of_middle_score': firing rate higher in the middle]
 
@@ -92,3 +92,6 @@ for name in data_separation:
         for transition_mode in transition_modes:
             overall_plots.plot_transitions(overall_plot_folder, animal, data.loc[:,transition_mode], name,
                                            mode=transition_mode, show=show, save=save)
+
+
+print('overall_analysis for animal {} done!'.format(animal))

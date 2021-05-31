@@ -367,7 +367,9 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
     std_of_all = np.std(downsampled, axis=1)[:, None]
     n_of_samples = binned.shape[2]
     z_scores =  (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all #compute z score
-    sem = std_of_population / np.sqrt(n_of_samples) # compute SEM (stadard error of the mean)
+    sem = std_of_population / np.sqrt(n_of_samples) # compute SEM (standard error of the mean)
+    x = np.arange(z_scores.shape[1]) #labels for bar plot
+
     if do_archive:
         archive.loc[:, idx[mode, :]] = z_scores #save z scores to archive
     if show or save:
