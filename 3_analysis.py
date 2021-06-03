@@ -1,12 +1,12 @@
 
-animal = '211' #one of the sets with one day
-toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+animal = '209' #one of the sets with one day
+toplot = [ 'phase']  # subselection of: ['raw', 'classic', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase']
 
-delete_plot_folder = True
-delete_archive = True
+delete_plot_folder = False
+delete_archive = False
 show = False
-save = True
+save = False
 do_archive = True
 
 import copy

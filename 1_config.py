@@ -1,5 +1,5 @@
-animal = '211'
-max_impedance = 250000
+animal = '209'
+max_impedance = 2500000
 max_channel = 33
 select_channels = True
 
@@ -107,7 +107,7 @@ if select_channels:
     for row, ax in tqdm(enumerate(axs)):
         label = 'channel: ' + str(mPFC_channels[row]) + ', ' + str(
             mPFC_impedance[row] * 100 // max_impedance) + '% max impedance'
-        ax.plot(toplot[toplot.shape[0]-row], label=label, linewidth=1)
+        ax.plot(toplot[toplot.shape[0]-row-1], label=label, linewidth=1)
         ax.legend(loc='upper right')
     plt.ylim(-50, 50)
     fig.suptitle('mPFC channels', size=100)
@@ -123,7 +123,7 @@ if select_channels:
     for row, ax in tqdm(enumerate(axs)):
         label = 'channel: ' + str(vHIP_channels[row]) + ', ' + str(
             vHIP_impedance[row] * 100 // max_impedance) + '% max impedance'
-        ax.plot(toplot[toplot.shape[0]-row], label=label, linewidth=1)
+        ax.plot(toplot[toplot.shape[0]-row-1], label=label, linewidth=1)
         ax.legend(loc='upper right')
     plt.ylim(-50, 50)
     fig.suptitle('vHIP channels', size=100)

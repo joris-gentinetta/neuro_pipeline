@@ -366,16 +366,18 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
     std_of_population = np.std(binned, axis=2)
     std_of_all = np.std(downsampled, axis=1)[:, None]
     n_of_samples = binned.shape[2]
-    z_scores =  (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all #compute z score
+    z_scores = (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all #compute z score
     sem = std_of_population / np.sqrt(n_of_samples) # compute SEM (standard error of the mean)
-    x = np.arange(z_scores.shape[1]) #labels for bar plot
 
     if do_archive:
         archive.loc[:, idx[mode, :]] = z_scores #save z scores to archive
     if show or save:
         for unit in range(data.shape[0]):
-            fig = plt.figure(figsize=(5, 5))
-            plt.bar(x, z_scores[unit], yerr=sem[unit], width=25)
+            fig = plt.figure(figsize=(25, 5))
+            plt.bar(np.arange(number_of_bins), z_scores[unit], yerr=sem[unit], width=1)
+            plt.xticks(np.arange(number_of_bins),
+                       np.arange(-number_of_bins // 2, number_of_bins // 2) * 10 / number_of_bins)
+
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
             if unit != 0:
@@ -386,10 +388,13 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
                 plt.show()
             plt.close(fig)
         mean_of_units = np.mean(z_scores, axis=0)
-        std_of_units = np.mean(z_scores, axis=0)
+        std_of_units = np.std(z_scores, axis=0)
         n_of_units = z_scores.shape[0]
         sem_of_units = std_of_units / np.sqrt(n_of_units)
-        plt.bar(x, mean_of_units, yerr=sem_of_units, width=25)
+        plt.bar(np.arange(number_of_bins), mean_of_units, yerr=sem_of_units, width=1)
+        plt.xticks(np.arange(number_of_bins),
+                   np.arange(-number_of_bins // 2, number_of_bins // 2) * 10 / number_of_bins)
+
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
 
@@ -472,6 +477,7 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
             toplot = ROI[unit][[0, 1, 2, 3, 4, 6, 5, 7]] #arrangement: ['top right', 'top left', 'bottom left',
             # 'bottom right', 'top (open)', 'bottom (open)', 'left (closed)', 'right (closed)']
             plt.bar(np.arange(8), toplot)
+            plt.xticks(np.arange(8), [0, 1, 2, 3, 4, 6, 5, 7])
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg') # cluster_names[0] = 255 -> mua
             if unit != 0:
@@ -489,6 +495,7 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
         fig = plt.figure(figsize=(5, 5))
         toplot = ROImean[[0, 1, 2, 3, 4, 6, 5, 7]]
         plt.bar(np.arange(8), toplot, width=1)
+        plt.xticks(np.arange(8), [0, 1, 2, 3, 4, 6, 5, 7])
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
         plt.title('firing rate all units')
@@ -551,6 +558,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
             fig = plt.figure(figsize=(5, 5))
             plt.bar(np.arange(9), ROI[unit]) #arrangement of the ROIs: {0: 'top right', 1: 'top left', 2: 'bottom left',
                                              # 3: 'bottom right', 4: 'right', 5: 'top', 6: 'left', 7: 'bottom', 8: 'middle'}
+            plt.xticks(np.arange(9), np.arange(9))
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
             if show:
@@ -566,6 +574,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
         unit_sum = (np.mean(ROI[1:], axis=0))
         fig = plt.figure(figsize=(5, 5))
         plt.bar(np.arange(9), unit_sum)
+        plt.xticks(np.arange(9), np.arange(9))
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
         plt.title('firing rate all units')
@@ -677,16 +686,19 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
 #             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)
         for bin in range(number_of_bins):
             binned[:, bin] =  np.sum(masked == bin, axis=1) #slow part
-        mean = binned.mean(axis=1)
+        mean = np.mean(binned, axis=1)
         #mean = np.where(mean != 0, mean, 1)
         # phase_distribution -= mean[:, None]
         binned_normalized = binned / mean[:, None]
         if do_archive:
-            archive.loc[unit, idx[unit_keys, :]] = np.reshape(binned, -1)
+            archive.loc[unit, idx[unit_keys, :]] = np.reshape(binned, -1).astype(np.uint32)
         if save or show:
             for row, vHIP_pad in enumerate(vHIP_pads):
                 fig = plt.figure(figsize=(5, 5))
                 plt.bar(np.arange( number_of_bins), binned[row], width=1)
+                plt.xticks(np.arange(number_of_bins),
+                           np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
+
                 if save:
                     plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
                 if show:
@@ -699,6 +711,9 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
 
             fig = plt.figure(figsize=(5, 5))
             plt.bar(np.arange(number_of_bins), binned_normalized.mean(axis=0)*binned.mean(), width=1)
+            plt.xticks(np.arange(number_of_bins),
+                       np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
+
             if save:
                 plt.savefig(file_name + '_unit_' + str(unit) + 'all_pads.jpg')
             if show:

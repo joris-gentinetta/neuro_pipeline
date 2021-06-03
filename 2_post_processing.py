@@ -1,4 +1,4 @@
-animal = '211'
+animal = '209'
 
 
 import h5py
@@ -69,15 +69,15 @@ cluster_names[0] = -1
 np.save(circus + 'cluster_names', cluster_names)
 
 
-lw =0.4
-fig = plt.figure(figsize = (30,1.5 * data.shape[0]))
-gs = fig.add_gridspec(data.shape[0]-1, hspace=0)
-axs = gs.subplots(sharex=True, sharey=True)
-for i, ax in tqdm(enumerate(axs)):
-    ax.plot(data[i+1, :data.shape[1]//16], label = str(i), linewidth = lw)
-    ax.legend(loc = 'upper right')
-#plt.ylim(-250, 250)
-
+# lw =0.4
+# fig = plt.figure(figsize = (30,1.5 * data.shape[0]))
+# gs = fig.add_gridspec(data.shape[0]-1, hspace=0)
+# axs = gs.subplots(sharex=True, sharey=True)
+# for i, ax in tqdm(enumerate(axs)):
+#     ax.plot(data[i+1, :data.shape[1]//16], label = str(i), linewidth = lw)
+#     ax.legend(loc = 'upper right')
+# #plt.ylim(-250, 250)
+#
 
 for i in range(logbook_3.size-1):
     np.save(circus + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
