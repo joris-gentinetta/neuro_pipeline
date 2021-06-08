@@ -1,12 +1,12 @@
 
-animal = '209' #one of the sets with one day
-toplot = [ 'phase']  # subselection of: ['raw', 'classic', 'transitions', 'statistics', 'phase']
+animal = '309' #one of the sets with one day
+toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase']
 
-delete_plot_folder = False
-delete_archive = False
+delete_plot_folder = True
+delete_archive = True
 show = False
-save = False
+save = True
 do_archive = True
 
 import copy
@@ -17,6 +17,8 @@ import time
 import numpy as np
 import pickle5 as pkl
 import plots
+from natsort import natsorted
+
 
 transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                   'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
@@ -41,7 +43,7 @@ number_of_bins_phase = 8 #phaseplot
 #factor = 360//number_of_bins_phase
 
 animal_folder = data_folder + animal + '/'
-experiment_names = os.listdir(animal_folder)
+experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
     experiment_names.remove('circus')
 
@@ -157,24 +159,22 @@ for experiment_name in experiment_names:
     if 'phase' in toplot:
         archive = plots.plot_phase(vHIP_pads, target_folder, plot_folder, experiment_name, off,
                               physio_trigger,
-                              cluster_names, archive, environment, number_of_bins = number_of_bins_phase, show=show, save=save, do_archive=do_archive)
-    #################################
-
+                              cluster_names, archive, environment, number_of_bins = number_of_bins_phase, show=show,
+                                   save=save, do_archive=do_archive, single_figures=False, multi_figure=True)
+#################################
     if environment == 'EZM':
         if 'raw' in toplot:
             plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
                            physio_trigger
                            , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
-        #################################
         if 'classic' in toplot:
             plots.plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
                                physio_trigger, cluster_names, sigma=10, minp=0, maxp=95, n=150, show=show, save=save)
         if 'environment' in toplot:
             plots.plot_circle(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                              cluster_names, n=360, sigma=-1, show=show, save=save)
+                              cluster_names, n=360, sigma=-1, show=show, save=save) #sigma = -1 sets sigma matching n
         if 'transitions' in toplot:
             for mode in transition_keys:
-                # plotmode is one of ['std', 'percent']
                 archive = plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive,
                                        mode=mode, n=200, number_of_bins=number_of_bins_transitions, show=show, save=save, do_archive=do_archive)
         if 'statistics' in toplot:

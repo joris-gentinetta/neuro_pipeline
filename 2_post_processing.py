@@ -1,4 +1,4 @@
-animal = '209'
+animal = '309'
 
 
 import h5py
@@ -7,11 +7,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 import os
+from natsort import natsorted
+
 
 
 
 animal_folder = r'E:/anxiety_ephys/' + animal + '/'
-experiment_names = os.listdir(animal_folder)[:-1]
+experiment_names = natsorted(os.listdir(animal_folder))
+if 'circus' in experiment_names:
+    experiment_names.remove('circus')
 experiment_name = experiment_names[0]
 sub_folder = 'circus'
 circus = animal_folder + sub_folder + '/'
@@ -48,6 +52,7 @@ logbook_3 = logbook_3*50//20000
 
 original_spiketimes = np.load(folder + stimes)
 spiketimes = original_spiketimes*50//20000  #sampled at 50Hz
+q  = spiketimes[-1] #remove
 clusters = np.load(folder + sclusters)
 data = np.zeros((int(indexer.max()+1), logbook_3[-1]), dtype=np.uint8)
 original_data = np.zeros((int(indexer.max()+1), original_logbook_3[-1]), dtype=bool)

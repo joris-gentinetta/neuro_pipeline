@@ -1,5 +1,5 @@
-animals = ['11'] # set of animals, example animal 9: '09'
-treatment = 'saline' # one of ['none', 'saline', 'medication']
+animals = ['11', '09'] # set of animals, 2 char string, example animal 9: '09'
+treatment = 'medication' # one of ['none', 'saline', 'medication']
 score = 'ezm_closed_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score']
 threshold = 0                      # recommended: [0                 ,  0                    ,  0                ,  0               ]
 data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
@@ -10,7 +10,7 @@ data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshol
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
 # 'of_middle_score': firing rate higher in the middle]
 
-toplot = ['phase']
+toplot = ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
 # selection of: ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
 transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                     'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
@@ -22,8 +22,8 @@ transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_ope
 # 'nosedip_starttime', 'nosedip_stoptime']
 phase_modes = ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
 # selection of: ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
-delete_plot_folder = False
-show = True
+delete_plot_folder = True
+show = False
 save = True
 
 import copy
@@ -59,7 +59,6 @@ else:
 
 
 
-#vHIP_pads = np.load(target_folder + 'phase_files/' + 'vHIP_pads.npy') #todo
 archives = []
 for day in days:
     target_folder = data_folder + day + '/' + sorter + '/'
@@ -120,10 +119,10 @@ for data_separation in data_separations:
             column_names = data.columns.levels[0].values
             pad_columns = [column_name  for column_name in column_names if column_name[:len(phase_mode)] == phase_mode]
 
-            mean_theta = np.zeros((data.shape[0], data.loc[:,pad_columns[0]].shape[1]), dtype=np.uint32)
+            mean_theta = np.zeros((data.shape[0], data.loc[:,pad_columns[0]].shape[1]), dtype=np.float32)
             counter = 0
             for pad_column in pad_columns :
-                mean_theta += data.loc[:,pad_column].values.astype(np.uint32)
+                mean_theta += data.loc[:,pad_column].values.astype(np.float32)
                 counter+=1
             mean_theta = mean_theta // counter
 
@@ -134,4 +133,4 @@ for data_separation in data_separations:
                                          show=show, save=save)
 
 
-print('overall_analysis done for animals: {}, treatment: {}, score: {}, threshold: {}'.format(animals, treatment, score, threshold))
+print('treatment_analysis done for animals: {}, treatment: {}, score: {}, threshold: {}'.format(animals, treatment, score, threshold))

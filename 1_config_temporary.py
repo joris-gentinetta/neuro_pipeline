@@ -1,8 +1,7 @@
-animal = '309'
+animal = '012'
 max_impedance = 2500000
 max_channel = 33
 select_channels = False
-delete_circus_folder = False
 
 import numpy as np
 from load_intan_rhd_format.load_intan_rhd_format import read_data
@@ -14,6 +13,7 @@ import time
 import subprocess
 import shlex
 from natsort import natsorted
+
 
 from scipy.signal import hilbert
 from scipy.signal import butter, sosfiltfilt
@@ -29,9 +29,8 @@ sub_folder = 'circus'
 target_folder = animal_folder + sub_folder + '/'
 
 if (os.path.exists(target_folder)):
-    # print('overwrite ', target_folder, '? [y/n]')
-    # if input() == 'y':
-    if delete_circus_folder:
+    print('overwrite ', target_folder, '? [y/n]')
+    if input() == 'y':
         shutil.rmtree(target_folder)
         time.sleep(5)
         os.mkdir(target_folder)
@@ -52,14 +51,16 @@ experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
     experiment_names.remove('circus')
 data_folders = [animal_folder + experiment_name + '/' for experiment_name in experiment_names]
+# rhd_folder = data_folder + 'ephys/'
 templates = r'E:/pipe/spykingcircus_sorter_2/templates/'
+# rhd_files = os.listdir(rhd_folder)
 param_file = target_folder + 'dat_files/' + experiment_names[0] + '_0.params'
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat'
 
 # get common channels, create trigger files
 for index, data_folder in enumerate(data_folders):
     rhd_folder = data_folder + 'ephys/'
-    rhd_files = natsorted(os.listdir(rhd_folder))
+    rhd_files = natsortos.listdir(rhd_folder)
     amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']
     channel_set = {int(channel['native_channel_name'][2:]) for channel in amp_channels}
     if index == 0:
@@ -86,7 +87,7 @@ vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) +
 
 data_folder = data_folders[-1]
 rhd_folder = data_folder + 'ephys/'
-rhd_files = natsorted(os.listdir(rhd_folder))
+rhd_files = os.listdir(rhd_folder)
 amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']  # time: 02:28min for 25 files
 channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels]
 mPFC_indices = [channel_list.index(valid_channel) for valid_channel in mPFC_channels]
@@ -100,7 +101,7 @@ if select_channels:
     mPFC_data = rhd_data[mPFC_indices]
     vHIP_data = rhd_data[vHIP_indices]
     sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-    spike_filtered = sosfiltfilt(sos_spike, mPFC_data - np.median(mPFC_data, axis=0)[None, :], axis=1)
+    spike_filtered = sosfilt(sos_spike, mPFC_data - np.median(mPFC_data, axis=0)[None, :], axis=1)
     toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9]
     fig = plt.figure(figsize=(20, 30))
     gs = fig.add_gridspec(toplot.shape[0], hspace=0)
@@ -114,7 +115,7 @@ if select_channels:
     fig.suptitle('mPFC channels', size=100)
     plt.show()
     plt.close(fig)
-    spike_filtered = sosfiltfilt(sos_spike, vHIP_data - np.median(vHIP_data, axis=0)[None, :], axis=1)
+    spike_filtered = sosfilt(sos_spike, vHIP_data - np.median(vHIP_data, axis=0)[None, :], axis=1)
     spike_filtered = spike_filtered - np.median(spike_filtered, axis=0)[None, :]
 
     toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9]
@@ -183,85 +184,17 @@ for index, data_folder in tqdm(enumerate(data_folders)):
     mPFC_concatenated = mPFC_concatenated[:, :total_size]
     vHIP_concatenated = vHIP_concatenated[:, :total_size]
     # raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
-    sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-    sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-    theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
-    spike_filtered = sosfiltfilt(sos_spike, mPFC_concatenated - np.median(mPFC_concatenated, axis=0)[None, :], axis=1)
-    hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
+    # sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
+    # sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
+    # theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
+    # spike_filtered = sosfiltfilt(sos_spike, mPFC_concatenated - np.median(mPFC_concatenated, axis=0)[None, :], axis=1)
+    # hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-    np.save(target_folder + 'phase_files/' + experiment_names[index], hilbert_phase)
-    np.save(target_folder + 'numpy_files/' + experiment_names[index], spike_filtered)
+    # np.save(target_folder + 'phase_files/' + experiment_names[index], hilbert_phase)
+    # np.save(target_folder + 'numpy_files/' + experiment_names[index], spike_filtered)
     logbook[index] = total_size
 np.save(target_folder + 'logbook', logbook)
 end = time.time()
 
-# prepare probe.prb file
-radius = 100
-cap1 = ('total_nb_channels = ' + str(total_nb_channels)
-        + '\nradius = ' + str(radius)
-        + '\ngraph = ' + str(graph)
-        + '\nchannels = ' + str(channels)
-        + '\ngeometry = ' + str(geometry))
-
-# create probe.prb file
-with open(target_folder + 'probe.prb', 'w') as f:
-    f.write(cap1)
-with open(templates + 'probespecs.prb', 'r') as f:
-    t = f.read()
-with open(target_folder + 'probe.prb', 'a') as f:
-    f.write(t)
-
-# prepare parameters.params file
-cap2 = ('[data]'
-        + '\nnb_channels = ' + str(total_nb_channels)
-        + '\nmapping = ' + target_folder + 'probe.prb'
-        + '\noutput_dir = ' + target_folder + 'dat_files_mod')
-
-# create parameters.params file
-
-with open(param_file, 'w') as f:
-    f.write(cap2)
-with open(templates + 'parameters.params', 'r') as f:
-    t = f.read()
-with open(param_file, 'a') as f:
-    f.write(t)
-
-# start clustering process #15min
-
-
-cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10'
-os.system(cluster_command)
-
-# args = shlex.split(cluster_command)
-# cluster = subprocess.run(args, stdout=subprocess.PIPE,
-#                          encoding='ascii')
-# print(cluster.stdout)
-#
-# print('clustering return code: ', cluster.returncode)
-
-
-converter_command = 'spyking-circus ' + circus_entrypoint + ' -m converting -c 10'
-args = shlex.split(converter_command)
-
-converter = subprocess.run(args, stdout=subprocess.PIPE,
-                           input='a\n', encoding='ascii')
-
-print(converter.returncode)
-# print(converter.stdout)
-
-
-# start viewer
-viewer_command = 'circus-gui-python ' + circus_entrypoint
-with open(target_folder + 'start_viewer.txt', 'w') as f:
-    f.write(viewer_command)
-args = shlex.split(viewer_command)
-
-viewer = subprocess.run(args, stdout=subprocess.PIPE,
-                        encoding='ascii')
-
-print(viewer.returncode)
-# print(viewer.stdout)
-
-print('config for animal {} done!'.format(animal))

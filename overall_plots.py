@@ -207,8 +207,7 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, sho
         axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins), toplot, yerr=errorbar, width=1)
         axs[pad_number//4, pad_number%4].set_xticks(np.arange(number_of_bins))
         axs[pad_number//4, pad_number%4].set_xticklabels(np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
-        # ax.set_xticks([1, 4, 5])
-        # ax.set_xticklabels([1, 4, 5], fontsize=12)
+
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:

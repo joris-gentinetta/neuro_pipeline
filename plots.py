@@ -347,7 +347,7 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
 
     downsampled = np.empty((data.shape[0], data.shape[1] // (2* n + 1) * number_of_bins))
     for step in range(downsampled.shape[1]):
-        downsampled[:,step] = np.mean(data[:,step * (2*n + 1) // number_of_bins:(step+1) * (2*n + 1) // number_of_bins])
+        downsampled[:,step] = np.mean(data[:,step * (2*n + 1) // number_of_bins:(step+1) * (2*n + 1) // number_of_bins], axis=1)
 
     x = np.arange(-n, n + 1, (2 * n + 1) // (number_of_bins - 1)) #labels for bar plot
     transitions = events['transitions']
@@ -387,6 +387,7 @@ def plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_nam
             if show:
                 plt.show()
             plt.close(fig)
+        fig = plt.figure(figsize=(25, 5))
         mean_of_units = np.mean(z_scores, axis=0)
         std_of_units = np.std(z_scores, axis=0)
         n_of_units = z_scores.shape[0]
@@ -669,7 +670,7 @@ def get_of_score(rois):
 #makes theta_phase of archive
 def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
                environment, number_of_bins,
-               show, save, do_archive):
+               show, save, do_archive, single_figures, multi_figure):
     offset = (physio_trigger + off) * 20000 // 50
     mode = 'phase'
     key = 'theta_phase_' + environment
@@ -685,7 +686,7 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
 #         for angle in range(-180 , 180):
 #             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)
         for bin in range(number_of_bins):
-            binned[:, bin] =  np.sum(masked == bin, axis=1) #slow part
+            binned[:, bin] =  np.sum(masked == bin, axis=1) #slow part #change to mean
         mean = np.mean(binned, axis=1)
         #mean = np.where(mean != 0, mean, 1)
         # phase_distribution -= mean[:, None]
@@ -693,21 +694,41 @@ def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trig
         if do_archive:
             archive.loc[unit, idx[unit_keys, :]] = np.reshape(binned, -1).astype(np.uint32)
         if save or show:
-            for row, vHIP_pad in enumerate(vHIP_pads):
-                fig = plt.figure(figsize=(5, 5))
-                plt.bar(np.arange( number_of_bins), binned[row], width=1)
-                plt.xticks(np.arange(number_of_bins),
-                           np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
+            if single_figures:
+                for row, vHIP_pad in enumerate(vHIP_pads):
+                    fig = plt.figure(figsize=(5, 5))
+                    plt.bar(np.arange( number_of_bins), binned[row], width=1)
+                    plt.xticks(np.arange(number_of_bins),
+                               np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
 
+                    if save:
+                        plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
+                    if show:
+                        if unit != -1:
+                            plt.title('phase plot unit ' + str(unit) + ', pad ' + str(vHIP_pad))
+                        else:
+                            plt.title('phase plot all mua, pad ' + str(vHIP_pad))
+                        plt.show()
+                    plt.close(fig)
+            if multi_figure:
+                fig, axs = plt.subplots(8, 4, sharex=True, sharey=True)
+                fig.set_figheight(10)
+                fig.set_figwidth(12)
+                for row, vHIP_pad in enumerate(vHIP_pads):
+                    toplot = binned[row]
+                    pad_number = vHIP_pad - 33
+                    number_of_bins = toplot.shape[0]
+                    axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins), toplot, width=1)
+                    axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins))
+                    axs[pad_number // 4, pad_number % 4].set_xticklabels(
+                        np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
                 if save:
-                    plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
+                    plt.savefig(file_name + 'unit_' + str(unit) + '_pad_all' + '.jpg')
                 if show:
-                    if unit != -1:
-                        plt.title('phase plot unit ' + str(unit) + ', pad ' + str(vHIP_pad))
-                    else:
-                        plt.title('phase plot all mua, pad ' + str(vHIP_pad))
+                    fig.suptitle(key + 'unit_' + str(unit))
                     plt.show()
                 plt.close(fig)
+
 
             fig = plt.figure(figsize=(5, 5))
             plt.bar(np.arange(number_of_bins), binned_normalized.mean(axis=0)*binned.mean(), width=1)
