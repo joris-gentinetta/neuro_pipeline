@@ -1,4 +1,4 @@
-animals = ['11', '09'] # set of animals, 2 char string, example animal 9: '09'
+animals = ['11'] # set of animals, 2 char string, example animal 9: '09'
 treatment = 'medication' # one of ['none', 'saline', 'medication']
 score = 'ezm_closed_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score']
 threshold = 0                      # recommended: [0                 ,  0                    ,  0                ,  0               ]
@@ -10,21 +10,18 @@ data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshol
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
 # 'of_middle_score': firing rate higher in the middle]
 
-toplot = ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
+toplot = ['phase']
 # selection of: ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
-transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
-                    'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
-                    'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
-                    'nosedip_starttime', 'nosedip_stoptime']
+transition_modes = ['open_closed_entrytime']
 # selection of: ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
 # 'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
 # 'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
 # 'nosedip_starttime', 'nosedip_stoptime']
 phase_modes = ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
 # selection of: ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
-delete_plot_folder = True
-show = False
-save = True
+delete_plot_folder = False
+show = True
+save = False
 
 import copy
 import pandas as pd
@@ -117,7 +114,7 @@ for data_separation in data_separations:
         for phase_mode in phase_modes:
 
             column_names = data.columns.levels[0].values
-            pad_columns = [column_name  for column_name in column_names if column_name[:len(phase_mode)] == phase_mode]
+            pad_columns = [column_name for column_name in column_names if column_name[:len(phase_mode)] == phase_mode]
 
             mean_theta = np.zeros((data.shape[0], data.loc[:,pad_columns[0]].shape[1]), dtype=np.float32)
             counter = 0
@@ -126,10 +123,10 @@ for data_separation in data_separations:
                 counter+=1
             mean_theta = mean_theta // counter
 
-            overall_plots.plot_phase( plot_folder,  mean_theta, data_separation,
+            overall_plots.plot_phase( plot_folder,  mean_theta, data_separation, phase_mode,
                                          show=show, save=save)
             if len(animals) == 1:
-                overall_plots.plot_phase_all_pads(plot_folder,  data.loc[:,pad_columns], pad_columns, data_separation,
+                overall_plots.plot_phase_all_pads(plot_folder,  data.loc[:,pad_columns], pad_columns, data_separation, phase_mode,
                                          show=show, save=save)
 
 

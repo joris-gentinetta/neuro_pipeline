@@ -1,13 +1,15 @@
-
-animal = '309' #one of the sets with one day
-toplot = ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'classic', 'environment', 'transitions', 'statistics', 'phase']
+animal = '211' #one of the sets with one day
+toplot = ['transitions']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase']
+max_duration = 60 #seconds # if negative, crops from end
 
-delete_plot_folder = True
-delete_archive = True
-show = False
-save = True
-do_archive = True
+delete_plot_folder = False
+delete_archive = False
+show = True
+save = False
+do_archive = False
+single_figures = True
+multi_figure = False
 
 import copy
 import pandas as pd
@@ -19,6 +21,7 @@ import pickle5 as pkl
 import plots
 from natsort import natsorted
 
+make_path_visible = 0.0001
 
 transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                   'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
@@ -31,6 +34,8 @@ transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
                  '2021-02-26_mBWfus012_EZM_ephys': 35}
+                # '2021-03-13_mBWfus011_EZM_ephys': 0}#todo
+
 
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'
@@ -38,7 +43,7 @@ target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
 framerate = 50
 
-number_of_bins_transitions = 40 #in 10 second window around transitions
+number_of_bins_transitions = 20 #in 10 second window around transitions
 number_of_bins_phase = 8 #phaseplot
 #factor = 360//number_of_bins_phase
 
@@ -135,26 +140,36 @@ for experiment_name in experiment_names:
 
     physio_trigger = int(np.load(ptriggerfile) * framerate // 20000)
 
-    raw_data = np.load(datafile) * framerate
-    raw_data = raw_data.astype(np.float32, copy=False)
 
+    #get events/movement
     with open(eventfile, 'rb') as f:
         events = pkl.load(f)
+    movement = events['movement']
 
-    # offset for nan in 2021-02-26_mBWfus012_EZM_ephys_movement
-    # nans = np.where(np.isnan(events['movement']['calib_traj_y'][video_trigger:]))[0]
-    # if nans.shape[0] == 0:
-    #     off = 0
-    # else:
-    #     off = nans[-1] + 1
+    #create offset if mouse is not present at video_trigger
     accomodation = 20
     if experiment_name in mouse_is_late:
         off = (mouse_is_late[experiment_name] + accomodation)*framerate
     else:
         off = 0
+    #get raw data
+    raw_data = np.load(datafile) * framerate
+    #aligned[0] = x coordinate, aligned[1] = y coordinate, aligned[3:] units firingrate
+    aligned = np.empty(
+        (2+raw_data.shape[0], min(len(movement['calib_traj_x'].index) - video_trigger - off, raw_data.shape[1] - physio_trigger - off)),
+        dtype=np.float32)
+    aligned[0] = movement['calib_traj_x'][video_trigger + off: aligned.shape[1] + video_trigger + off]  # x coordinates
+    aligned[1] = movement['calib_traj_y'][video_trigger + off: aligned.shape[1] + video_trigger + off]  # y coordinates
+    aligned[2:raw_data.shape[0]+2] = raw_data[:,physio_trigger + off: aligned.shape[1] + physio_trigger + off] + make_path_visible
+
+    #crop to desired length
+    if max_duration > 0:
+        aligned = aligned[:, :max_duration*50]
+    else:
+        aligned = aligned[:, max_duration*50:]
 
     if do_archive:
-        archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(raw_data[:, physio_trigger+off:], axis=1)
+        archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(aligned[2:], axis=1)
     #################################
     if 'phase' in toplot:
         archive = plots.plot_phase(vHIP_pads, target_folder, plot_folder, experiment_name, off,
@@ -167,16 +182,22 @@ for experiment_name in experiment_names:
             plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
                            physio_trigger
                            , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
-        if 'classic' in toplot:
-            plots.plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                               physio_trigger, cluster_names, sigma=10, minp=0, maxp=95, n=150, show=show, save=save)
+        if 'trace' in toplot:
+            plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
+                               single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150, show=show, save=save, filter=False)
+        if 'trace_filtered' in toplot:
+            plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
+                             single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
+                             show=show, save=save, filter=True)
+
         if 'environment' in toplot:
-            plots.plot_circle(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                              cluster_names, n=360, sigma=-1, show=show, save=save) #sigma = -1 sets sigma matching n
+            plots.plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures, multi_figure=multi_figure,
+                n=360, sigma=-1, show=show, save=save) #sigma = -1 sets sigma matching n
         if 'transitions' in toplot:
             for mode in transition_keys:
-                archive = plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger, archive,
-                                       mode=mode, n=200, number_of_bins=number_of_bins_transitions, show=show, save=save, do_archive=do_archive)
+                event_indices = events['transitions'][mode]
+                archive = plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices, video_trigger, archive, single_figures, multi_figure,
+                     n=250, number_of_bins=20, show=show, save=save, do_archive=do_archive)
         if 'statistics' in toplot:
             archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
                             physio_trigger,
@@ -188,12 +209,20 @@ for experiment_name in experiment_names:
                            physio_trigger
                            , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
         #################################
-        if 'classic' in toplot:
-            plots.plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                               physio_trigger, cluster_names, sigma=10, minp=0, maxp=95, n=150, show=show, save=save)
+
+        if 'trace' in toplot:
+            plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
+                             single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
+                             show=show, save=save, filter=False)
+
+        if 'trace_filtered' in toplot:
+            plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
+                             single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
+                             show=show, save=save, filter=True)
+
         if 'environment' in toplot:
-            plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                            cluster_names, minp=0, maxp=100, n=4, show=show, save=save)
+            plots.plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures, multi_figure=multi_figure, minp=0,
+              maxp=100, n=5, show=show, save=save)
         if 'statistics' in toplot:
             archive = plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
                                cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)

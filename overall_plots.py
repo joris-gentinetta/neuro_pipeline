@@ -14,7 +14,7 @@ idx = pd.IndexSlice
 # controlled and commented
 def plot_circle(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'circle'
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+    file_data_separation = plot_folder + mode + '_' + data_separation
     colorcoding = np.empty(20)
     mean = np.mean(ROI, axis=0)
     colorcoding[2] = mean[0]
@@ -78,7 +78,7 @@ def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
 # corrected and commented
 # barplot with mean of z scores of selected units for timebins around transition, error bars: SEM
 def plot_transitions(plot_folder, transition_window, data_separation, mode, show=False, save=True):
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+    file_data_separation = plot_folder + mode + '_' + data_separation
 
     mean = np.mean(transition_window, axis=0)
     std = np.std(transition_window, axis=0)
@@ -90,9 +90,9 @@ def plot_transitions(plot_folder, transition_window, data_separation, mode, show
     errorbar = sem
     number_of_bins = transition_window.shape[1]
     timeframe = 10
-    plt.bar(np.arange(number_of_bins), toplot, yerr=errorbar, width=1)
-    plt.xticks(np.arange(number_of_bins),
-               np.arange(-number_of_bins // 2, number_of_bins // 2) * timeframe / number_of_bins)
+    plt.bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
+    plt.xticks(np.arange(number_of_bins+1),
+               np.arange(-number_of_bins // 2, number_of_bins // 2+1) * timeframe / number_of_bins)
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:
@@ -106,7 +106,7 @@ def plot_transitions(plot_folder, transition_window, data_separation, mode, show
 # plots mean of selected units regarding the percent difference of ROI(EZM) mean from overall mean of unit
 def plot_arms(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'arms'
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+    file_data_separation = plot_folder + mode + '_' + data_separation
 
     mean = np.mean(ROI, axis=0)
     std = np.std(ROI, axis=0)
@@ -132,7 +132,7 @@ def plot_arms(plot_folder, ROI, data_separation, show=False, save=True):
 # plots mean of selected units regarding the percent difference of ROI(OF) mean from overall mean of unit
 def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'corners'
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+    file_data_separation = plot_folder + mode + '_' + data_separation
 
     mean = np.mean(ROI, axis=0)
     std = np.std(ROI, axis=0)
@@ -155,11 +155,10 @@ def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
 
 
 # controlled and commented
-# plots barplot of the mean phase of all included units errror bars are SEM
-def plot_phase(plot_folder, binned, data_separation, show=False, save=True):
-    mode = 'phase'
+# plots barplot of the mean phase of all included units error bars are SEM
+def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True):
     binned = binned
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+    file_data_separation = plot_folder + mode + '_' + data_separation
     unit_mean = np.mean(binned, axis=1)
     normalized = (binned - unit_mean[:, None]) / unit_mean[:, None]
     mean = np.mean(normalized, axis=0)
@@ -171,9 +170,9 @@ def plot_phase(plot_folder, binned, data_separation, show=False, save=True):
     toplot = mean
     errorbar = sem
     number_of_bins = mean.shape[0]
-    plt.bar(np.arange(number_of_bins), toplot, yerr=errorbar, width=1)
-    plt.xticks(np.arange(number_of_bins),
-               np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
+    plt.bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
+    plt.xticks(np.arange(number_of_bins + 1),
+               np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
 
     if save:
         plt.savefig(file_data_separation + '.jpg')
@@ -184,13 +183,13 @@ def plot_phase(plot_folder, binned, data_separation, show=False, save=True):
     return
 
 
-def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, show, save):
-    mode = 'phase_all_pads'
-    file_data_separation = plot_folder + '_' + mode + '_' + data_separation
+def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mode, show, save):
+    mode = mode + '_all_pads'
+    file_data_separation = plot_folder + mode + '_' + data_separation
 
     fig, axs = plt.subplots(8, 4, sharex=True, sharey=True)
-    fig.set_figheight(10)
-    fig.set_figwidth(12)
+    fig.set_figheight(15)
+    fig.set_figwidth(15)
     for pad_name in pad_columns:
         pad_number = int(pad_name[-2:]) - 33
         binned = all_pads.loc[:, pad_name].values
@@ -204,10 +203,10 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, sho
         toplot = mean
         errorbar = sem
         number_of_bins = mean.shape[0]
-        axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins), toplot, yerr=errorbar, width=1)
-        axs[pad_number//4, pad_number%4].set_xticks(np.arange(number_of_bins))
-        axs[pad_number//4, pad_number%4].set_xticklabels(np.arange(-number_of_bins // 2, number_of_bins // 2) * 180 * 2 // number_of_bins)
-
+        axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
+        axs[pad_number//4, pad_number%4].set_xticks(np.arange(number_of_bins+1))
+        axs[pad_number//4, pad_number%4].set_xticklabels(np.arange(-number_of_bins // 2, number_of_bins // 2+1) * 180 * 2 // number_of_bins)
+        axs[pad_number // 4, pad_number % 4].set_title(pad_number+33, loc='right')
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:
