@@ -58,9 +58,6 @@ experiment_name = '2021-03-13_mBWfus011_before_arena_ephys'
 # # score = archive.loc[:,('characteristics', 'ezm_closed_score')]
 # # median = np.median(score)
 # pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
-animal =  '00'
-#phase = (np.load(target_folder + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180)
-path = r'E:\anxiety_ephys\211\2021-03-13_mBWfus011_before_arena_ephys\ephys_processed/2021-03-13_mBWfus011_before_arena_ephys_dataset.pkl'
-with open(path, 'rb') as f:
-    phase_from_file = pickle.load(f)
-pass
+path = 'E:/anxiety_ephys/211/circus/cutter.npy'
+a = np.array([[50,100],[300,400]], dtype=np.uint32)
+np.save(path,a)

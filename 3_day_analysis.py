@@ -1,5 +1,5 @@
 animal = '211' #one of the sets with one day
-toplot = ['transitions']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+toplot = ['phase']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
              # for full archive need at least ['transitions', 'statistics', 'phase']
 max_duration = 60 #seconds # if negative, crops from end
 
@@ -8,8 +8,8 @@ delete_archive = False
 show = True
 save = False
 do_archive = False
-single_figures = True
-multi_figure = False
+single_figures = False
+multi_figure = True
 
 import copy
 import pandas as pd
@@ -127,16 +127,11 @@ for experiment_name in experiment_names:
     eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
     datafile = target_folder + experiment_name + '.npy'
     ptriggerfile = target_folder + experiment_name + '_trigger.npy'
-    mtriggerfile = data_folder + animal + '/' + experiment_name + '/log.txt'
     plot_folder = all_plots + experiment_name + '/'
 
     if not os.path.exists(plot_folder):
         os.mkdir(plot_folder)
 
-    with open(mtriggerfile, 'r') as file:
-        data = file.read().replace('\n', ' ')
-    point = data.index('.')
-    video_trigger = int(float(data[point - 2:point + 3]) * framerate)
 
     physio_trigger = int(np.load(ptriggerfile) * framerate // 20000)
 
@@ -154,13 +149,32 @@ for experiment_name in experiment_names:
         off = 0
     #get raw data
     raw_data = np.load(datafile) * framerate
+    cutter = np.load(target_folder+'cutter.npy') # first row start time of cuts, second row stop time, dtype uint32
+    # #has to be ordered by start time, intervals can not overlap #50 Hz
+    physio_trigger = physio_trigger + off
+
+    adapted_physio_trigger = physio_trigger
+
+    xy = np.array([movement['calib_traj_x'], movement['calib_traj_y']], dtype=np.float32)
+    # boolean = np.ones(xy.shape[1], dtype=np.bool)
+    # for cut in range(cutter.shape[1]):
+    #     boolean[cutter[0, cut]: cutter[1, cut]] = 0
+    #     if cutter[0,cut]>physio_trigger:
+    #         break
+    #     if cutter[1,cut] <= physio_trigger:
+    #         adapted_physio_trigger -=(cutter[1,cut]-cutter[0,cut])
+    #     else:
+    #         adapted_physio_trigger -= (physio_trigger - cutter[0, cut])
+    # adapted_video_trigger = video_trigger + off - (physio_trigger-adapted_physio_trigger)
+    # xy = xy[:, boolean]
     #aligned[0] = x coordinate, aligned[1] = y coordinate, aligned[3:] units firingrate
     aligned = np.empty(
-        (2+raw_data.shape[0], min(len(movement['calib_traj_x'].index) - video_trigger - off, raw_data.shape[1] - physio_trigger - off)),
+        (2+raw_data.shape[0], min(xy.shape[1] - adapted_video_trigger, raw_data.shape[1] - adapted_physio_trigger)),
         dtype=np.float32)
-    aligned[0] = movement['calib_traj_x'][video_trigger + off: aligned.shape[1] + video_trigger + off]  # x coordinates
-    aligned[1] = movement['calib_traj_y'][video_trigger + off: aligned.shape[1] + video_trigger + off]  # y coordinates
-    aligned[2:raw_data.shape[0]+2] = raw_data[:,physio_trigger + off: aligned.shape[1] + physio_trigger + off] + make_path_visible
+
+    aligned[0] =xy[0][adapted_video_trigger: aligned.shape[1] + adapted_video_trigger]  # x coordinates
+    aligned[1] = xy[1][adapted_video_trigger: aligned.shape[1] + adapted_video_trigger]  # y coordinates
+    aligned[2:raw_data.shape[0]+2] = raw_data[:adapted_physio_trigger: aligned.shape[1] + adapted_physio_trigger] + make_path_visible
 
     #crop to desired length
     if max_duration > 0:
@@ -172,10 +186,12 @@ for experiment_name in experiment_names:
         archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(aligned[2:], axis=1)
     #################################
     if 'phase' in toplot:
-        archive = plots.plot_phase(vHIP_pads, target_folder, plot_folder, experiment_name, off,
-                              physio_trigger,
-                              cluster_names, archive, environment, number_of_bins = number_of_bins_phase, show=show,
-                                   save=save, do_archive=do_archive, single_figures=False, multi_figure=True)
+        offset = (physio_trigger + off) * 20000 // 50
+        phase_aligned = (np.load(target_folder + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180) * number_of_bins_phase // 360
+        original_aligned = np.load(target_folder + 'original_' + experiment_name + '.npy')[:, offset:]
+        archive = plots.plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experiment_name, cluster_names, archive,
+               environment, number_of_bins = number_of_bins_phase, show=show,
+                                   save=save, do_archive=do_archive, single_figures=single_figures, multi_figure=multi_figure)
 #################################
     if environment == 'EZM':
         if 'raw' in toplot:
@@ -191,17 +207,19 @@ for experiment_name in experiment_names:
                              show=show, save=save, filter=True)
 
         if 'environment' in toplot:
-            plots.plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures, multi_figure=multi_figure,
+            plots.plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures,
+                              multi_figure=multi_figure,
                 n=360, sigma=-1, show=show, save=save) #sigma = -1 sets sigma matching n
         if 'transitions' in toplot:
             for mode in transition_keys:
                 event_indices = events['transitions'][mode]
-                archive = plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices, video_trigger, archive, single_figures, multi_figure,
+                archive = plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices
+                                            , video_trigger, archive, single_figures, multi_figure,
                      n=250, number_of_bins=20, show=show, save=save, do_archive=do_archive)
-        if 'statistics' in toplot:
-            archive = plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                            physio_trigger,
-                            cluster_names, archive, transition_size=5, n=150, show=show, save=save, do_archive=do_archive)
+        #todo remove comment signs
+        # if 'statistics' in toplot:
+        #     archive = plots.plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures,
+        #                               multi_figure, transition_size=5, n=150, show=show, save=save, do_archive=do_archive)
 
     elif environment == 'OFT':
         if 'raw' in toplot:
@@ -224,8 +242,8 @@ for experiment_name in experiment_names:
             plots.plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures, multi_figure=multi_figure, minp=0,
               maxp=100, n=5, show=show, save=save)
         if 'statistics' in toplot:
-            archive = plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                               cluster_names, archive, n=4, show=show, save=save, do_archive=do_archive)
+            archive = plots.plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures=single_figures, multi_figure=multi_figure,
+                  n=4, show=show, save=save, do_archive=do_archive)
 
     #################################
     if do_archive:

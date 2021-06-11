@@ -54,7 +54,7 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
 
         content[2:] = gaussian_filter1d(content[2:], sigma=sigma, axis=1) #filter temporally (gaussian)
 
-    number_of_units = content[2:].shape[0]
+    number_of_units = content.shape[0] - 2
     grid = np.zeros((n, n, number_of_units), dtype=np.float32) #2d grid containing firing rate at coordinates given by row(y) and column(x)
    
     if environment == 'EZM':
@@ -146,93 +146,6 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
     plt.close(fig)
     return
 
-#controlled, take comments from plot_classic
-#plots 2d firing rate
-# def plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-#              cluster_names, minp=0, maxp=90, n=150, show=False, save=True):
-#     movement = events['movement']
-#     mode = 'raw'
-#     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_minp' + str(minp) + '_maxp' + str(
-#         maxp) + '_'
-#
-#     data = raw_data
-#     grid = np.zeros((n, n, data.shape[0]), dtype=np.float32)
-#
-#     xyv = np.empty(
-#         (3, min(len(movement['calib_traj_x'].index) - video_trigger - off, data.shape[1] - physio_trigger - off)),
-#         dtype=np.float32)
-#     xyv[0] = movement['calib_traj_x'][video_trigger + off: xyv.shape[1] + video_trigger + off]
-#     xyv[1] = movement['calib_traj_y'][video_trigger + off: xyv.shape[1] + video_trigger + off]
-#     # xyv = np.empty(
-#     #     (3, min(len(movement['calib_traj_x'].index) - video_trigger - off, data.shape[1] - physio_trigger - off)),
-#     #     dtype=np.float32)
-#     # xyv[0] = movement['calib_traj_x'][video_trigger: xyv.shape[1] + video_trigger]
-#     # xyv[1] = movement['calib_traj_y'][video_trigger: xyv.shape[1] + video_trigger]
-#     #
-#
-#     if environment == 'EZM':
-#         sx = sy = 400
-#         xyv[1] -= 5
-#         mask = get_ezm_mask(n)
-#
-#     elif environment == 'OFT':
-#         sx = sy = 350
-#         xyv[0] += 6
-#         xyv[1] += 6
-#
-#     cmap = copy.copy(mpl.cm.get_cmap("Blues"))
-#     cmap.set_bad(color='grey')
-#     for unit in range(data.shape[0]):
-#         xyv[2] = data[unit][physio_trigger + off: xyv.shape[1] + physio_trigger + off] + make_path_visible
-#
-#         for x in range(n):
-#             for y in range(n):
-#                 boolean = np.logical_and(np.logical_and(xyv[0] > x / n * sx, xyv[0] < (x + 1) / n * sx),
-#                                          np.logical_and(xyv[1] > y / n * sy, xyv[1] < (y + 1) / n * sy))
-#                 bsum = np.sum(boolean)
-#                 if bsum != 0:
-#                     grid[x, y, unit] = np.sum(xyv[2][boolean]) / bsum
-#
-#         vmin = np.percentile(grid[:, :, unit][np.where(grid[:, :, unit] > 0)], minp)
-#         vmax = np.percentile(grid[:, :, unit][np.where(grid[:, :, unit] > 0)], maxp)
-#
-#         fig = plt.figure(figsize=(5, 5))
-#         im = plt.imshow(np.ma.masked_where(grid[:, :, unit] == 0, grid[:, :, unit]).T, cmap=cmap, origin='upper',
-#                         interpolation='none', vmin=vmin, vmax=vmax)
-#         if environment == 'EZM':
-#             plt.imshow(mask.T, cmap='Greys', origin='upper',
-#                        interpolation='none', alpha=0.1)
-#         plt.colorbar(im, fraction=0.046, pad=0.04)
-#
-#         if save:
-#             plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
-#
-#         if unit != 0:
-#             plt.title('firing rate unit ' + str(cluster_names[unit]))
-#         else:
-#             plt.title('firing rate all mua')
-#         if show:
-#             plt.show()
-#         plt.close(fig)
-#
-#     unit_mean = np.mean(grid[:, :, 1:], axis=2)
-#     vmin = np.percentile(unit_mean[np.where(unit_mean > 0)], minp)
-#     vmax = np.percentile(unit_mean[np.where(unit_mean > 0)], maxp)
-#
-#     fig = plt.figure(figsize=(5, 5))
-#     im = plt.imshow(np.ma.masked_where(unit_mean == 0, unit_mean).T, cmap=cmap, origin='upper', interpolation='none',
-#                     vmin=vmin, vmax=vmax)
-#     if environment == 'EZM':
-#         plt.imshow(mask.T, cmap='Greys', origin='upper',
-#                    interpolation='none', alpha=0.1)
-#     plt.colorbar(im, fraction=0.046, pad=0.04)
-#     if save:
-#         plt.savefig(file_name + 'all_units' + '.jpg')
-#     plt.title('firing rate all units')
-#     if show:
-#         plt.show()
-#     plt.close(fig)
-#     return
 
 #controlled and commented
 #plots spatially filtered circle (abstraction of the EZM) for every unit
@@ -243,7 +156,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
         sigma = n / 8 / 4
     file_name = plot_folder + experiment_name + '_' + mode + '_sigma' + str(sigma) + '_n' + str(n) + '_'
     content = np.copy(aligned)
-    number_of_units = content[2:].shape[0]
+    number_of_units = content.shape[0] - 2
     grid = np.zeros((number_of_units, n), dtype=np.float32) #rows: unit, columns: position in circle, 0 is on positive x axis
 
     content[1] -= 5 #shift upward
@@ -341,7 +254,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_minp' + str(minp) + '_maxp' + str(
         maxp) + '_'
     content = np.copy(aligned)
-    number_of_units = aligned.shape[0]-2
+    number_of_units = content.shape[0]-2
     grid = np.zeros((n, n, number_of_units), dtype=np.float32)
 
 
@@ -431,7 +344,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
 #plots the z score of the firing rate for every unit, and the mean of the z scores of all units
 
 
-def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices, video_trigger, archive, single_figures, multi_figure,
+def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices, archive, single_figures, multi_figure,
                      n=250, number_of_bins=20, show=False, save=True, do_archive=True): # +- n frames around event
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
     content = np.copy(aligned)
@@ -439,16 +352,14 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
     downsampled = np.empty((number_of_units, content.shape[1] // (2 * n) * number_of_bins))
     for step in range(downsampled.shape[1]):
         downsampled[:,step] = np.mean(aligned[2:,step * (2*n) // number_of_bins:(step+1) * (2*n) // number_of_bins], axis=1)
-
-   # x = np.arange(-n, n + 1, (2 * n + 1) // (number_of_bins - 1)) #labels for bar plot
-
-    transition_indices = [transition_index + video_trigger for transition_index in event_indices if
-                                  transition_index + video_trigger + n  <= content.shape[1] and transition_index + video_trigger - n >= 0]
+    transition_indices = [transition_index  for transition_index in event_indices if
+                                  transition_index  + n  <= content.shape[1] and transition_index - n >= 0]
+    if not transition_indices: #check if there are any valid events
+        return
     binned = np.zeros((number_of_units, number_of_bins, len(transition_indices)), dtype=np.float32) #unit, bar, transition_index
     for tindex, transition_index in enumerate(transition_indices):
             for bar in range(number_of_bins):
                 #take mean of all firingrates within bins(bars)
-                print('n')
                 binned[:, bar, tindex] = np.mean(content[2:, transition_index - n:transition_index + n ][:,
                                                         (2 * n ) * bar // number_of_bins: (2 * n ) * (bar + 1) // number_of_bins], axis=1)
     mean_of_population = np.mean(binned, axis=2) #mean of all transitons
@@ -467,7 +378,7 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                 fig = plt.figure(figsize=(25, 5))
                 plt.bar(np.arange(number_of_bins)+0.5, z_scores[unit], yerr=sem[unit], width=1)
                 plt.xticks(np.arange(number_of_bins+1),
-                           np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*2*n*50/number_of_bins)
+                           np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*n/number_of_bins/50)
                 if save:
                     plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
                 if unit != 0:
@@ -478,15 +389,25 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                     plt.show()
                 plt.close(fig)
         if multi_figure:
-            fig, axs = plt.subplots(number_of_units , sharex=True, sharey=True)
+          #  fig, axs = plt.subplots(number_of_units , sharex=True)
+            fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
+
             fig.set_figheight(15)
             fig.set_figwidth(15)
             for unit in range(number_of_units):
-                axs[unit].bar(np.arange(number_of_bins)+0.5, z_scores[unit], yerr=sem[unit], width=1)
-                axs[unit].set_title(cluster_names[unit], loc='right')
-                axs[unit].set_xticks(np.arange(number_of_bins+1))
-                axs[unit].set_xticklabels(np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*2*n*50/number_of_bins)
+                # axs[unit].bar(np.arange(number_of_bins)+0.5, z_scores[unit], yerr=sem[unit], width=1)
+                # axs[unit].set_title(cluster_names[unit], loc='right')
+                # axs[unit].set_xticks(np.arange(number_of_bins+1))
+                # axs[unit].set_xticklabels(np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*n/number_of_bins/50)
+                axs[unit // 4, unit % 4].bar(np.arange(number_of_bins) + 0.5, z_scores[unit], width=1) #, yerr=sem[unit]
+                axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
+                axs[unit // 4, unit % 4].set_xticks(np.linspace(0,number_of_bins+1,5))
+                axs[unit // 4, unit % 4].set_xticklabels(np.linspace(-number_of_bins // 2, number_of_bins // 2,
+                                                      5) * n / number_of_bins / 50)
 
+            axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+            for ax_to_delete in axes_to_delete:
+                fig.delaxes(ax_to_delete)
             if save:
                 plt.savefig(file_name + 'multiple' + '.jpg')
             if show:
@@ -501,8 +422,7 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
         sem_of_units = std_of_units / np.sqrt(n_of_units)
         plt.bar(np.arange(number_of_bins)+0.5, mean_of_units, yerr=sem_of_units, width=1)
         plt.xticks(np.arange(number_of_bins+1),
-                           np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*2*n*50/number_of_bins)
-
+                           np.linspace(-number_of_bins // 2, number_of_bins // 2, number_of_bins+1)*n/50/number_of_bins)
         if save:
             plt.savefig(file_name + 'all_units' + '.jpg')
 
@@ -517,38 +437,30 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
 # plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
 # plots the mean of all single unit plots
 # fills archive['ROI_EZM']
-def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-              cluster_names, archive, transition_size=2, n=150, show=False, save=True, do_archive=True):
-    movement = events['movement']
+def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures, multi_figure,
+              transition_size=2, n=150, show=False, save=True, do_archive=True):
     mode = 'arms'
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
+    content = np.copy(aligned)
+    number_of_units = content.shape[0]-2
+    grid = np.zeros((n, n, number_of_units), dtype=np.float32) #2d grid, indicating firing rate per coordinate
 
-    data = raw_data #unfiltered data
-    grid = np.zeros((n, n, data.shape[0]), dtype=np.float32) #2d grid, indicating firing rate per coordinate
-    xyv = np.empty(
-        (3, min(len(movement['calib_traj_x'].index) - video_trigger - off, data.shape[1] - physio_trigger - off)),
-        dtype=np.float32)
-    xyv[0] = movement['calib_traj_x'][video_trigger + off: xyv.shape[1] + video_trigger + off] #x component of the trajectory
-    xyv[1] = movement['calib_traj_y'][video_trigger + off: xyv.shape[1] + video_trigger + off] #y component of the trajectoru
-
-    xyv[1] -= 5 # shift 5 units upward (y axis is positive downward)
+    content[1] -= 5 # shift 5 units upward (y axis is positive downward)
     sx = 400 #max x coordinate
     sy = 400 #max y coordinate
-    ROI = np.zeros((data.shape[0], 8)) # row indicates unit, column ROI
+    ROI = np.zeros((number_of_units, 8)) # row indicates unit, column ROI
 
     masks = get_ezm_ROI_masks(n, transition_size)
 
-    for unit in range(data.shape[0]):
-        xyv[2] = data[unit][physio_trigger + off: xyv.shape[1] + physio_trigger + off] + make_path_visible #assign firing rate to coordinates
-
+    for unit in range(number_of_units):
         for x in range(n):
             for y in range(n):
-                boolean = np.logical_and(np.logical_and(xyv[0] > x / n * sx, xyv[0] < (x + 1) / n * sx),
-                                         np.logical_and(xyv[1] > y / n * sy, xyv[1] < (y + 1) / n * sy))
-                bsum = np.sum(boolean)
-                if bsum != 0:
-                    grid[x, y, unit] = np.sum(xyv[2][boolean]) / bsum #assign sum of firing rate of all times visited divided
-                    # by number of times visited (mean firing rate per coordinate)
+                boolean = np.logical_and(np.logical_and(content[0] > x / n * sx, content[0] < (x + 1) / n * sx),
+                                         np.logical_and(content[1] > y / n * sy, content[1] < (y + 1) / n * sy))
+                mask = np.tile(np.invert(boolean), (number_of_units, 1))
+                masked = np.ma.masked_array(content[2:], mask=mask)
+                grid[x, y, :] = np.mean(masked, axis=1) #assign mean firing rate per coordinate)
+
 
         for quadrant in range(8):
             valid_values_in_quadrant = grid[:, :, unit][np.logical_and(masks[quadrant] == 1, grid[:, :, unit] != 0)] #1d array of all values in quadrant and visited
@@ -562,9 +474,9 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
             if mean_of_unit != 0:
                 ROI[unit, quadrant] = (mean_in_quadrant - mean_of_unit) * 100 / mean_of_unit #percent difference to mean of unit
             else:
-                raise Exception('unit mean is zero, line 477')
+                raise Exception('unit mean is zero, code to ctrl-F for: 23456')
 
-        if save or show:
+        if (save or show) and single_figures:
             fig = plt.figure(figsize=(5, 5))
             toplot = ROI[unit][[0, 1, 2, 3, 4, 6, 5, 7]] #arrangement: ['top right', 'top left', 'bottom left',
             # 'bottom right', 'top (open)', 'bottom (open)', 'left (closed)', 'right (closed)']
@@ -579,6 +491,33 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
             if show:
                 plt.show()
             plt.close(fig)
+
+    if (save or show) and multi_figure:
+        fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
+        fig.set_figheight(15)
+        fig.set_figwidth(15)
+        for unit in range(number_of_units):
+            toplot = ROI[unit][[0, 1, 2, 3, 4, 6, 5, 7]]  # arrangement: ['top right', 'top left', 'bottom left',
+            # 'bottom right', 'top (open)', 'bottom (open)', 'left (closed)', 'right (closed)']
+
+            axs[unit // 4, unit % 4].bar(np.arange(8), toplot)
+
+            axs[unit // 4, unit % 4].set_xticks(np.arange(8))
+            axs[unit // 4, unit % 4].set_xticklabels([0, 1, 2, 3, 4, 6, 5, 7])
+
+            axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
+
+        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        # for ax_to_delete in axes_to_delete:
+        #     fig.delaxes(ax_to_delete)
+        if save:
+            plt.savefig(file_name + 'multiple' + '.jpg')
+        if show:
+            fig.suptitle(file_name)
+            plt.show()
+        plt.close(fig)
+
+
     if do_archive:
         archive.loc[:, idx['ROI_EZM', :]] = ROI # add to archive
 
@@ -601,42 +540,30 @@ def plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off
 # plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
 # plots the mean of all single unit plots
 # fills archive['ROI_OF']
-def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger, cluster_names,
-                 archive,
+def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures, multi_figure,
                  n=5, show=False, save=True, do_archive=True):
-    movement = events['movement']
     mode = 'corners'
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
+    content = np.copy(aligned)
+    number_of_units = content.shape[0]-2
+    grid = np.zeros((n, n, number_of_units), dtype=np.float32)
 
-    data = raw_data
-    grid = np.zeros((n, n, data.shape[0]), dtype=np.float32)
-
-    xyv = np.empty(
-        (3, min(len(movement['calib_traj_x'].index) - video_trigger - off, data.shape[1] - physio_trigger - off)),
-        dtype=np.float32)
-    xyv[0] = movement['calib_traj_x'][video_trigger + off: xyv.shape[1] + video_trigger + off]
-    xyv[1] = movement['calib_traj_y'][video_trigger + off: xyv.shape[1] + video_trigger + off]
     sx = sy = 350
-    xyv[0] += 6
-    xyv[1] += 6
-    ROI = np.zeros((data.shape[0], 9)) #rows: units, columns: ROIs
+    content[0] += 6
+    content[1] += 6
+    ROI = np.zeros((number_of_units, 9)) #rows: units, columns: ROIs
+    for x in range(n):
+        for y in range(n):
 
-    for unit in range(data.shape[0]):
-        xyv[2] = data[unit][physio_trigger + off: xyv.shape[1] + physio_trigger + off] + make_path_visible
+            boolean = np.logical_and(np.logical_and(content[0] > x / n * sx, content[0] < (x + 1) / n * sx),
+                                     np.logical_and(content[1] > y / n * sy, content[1] < (y + 1) / n * sy))
+            mask = np.tile(np.invert(boolean), (number_of_units, 1))
+            masked = np.ma.masked_array(content[2:], mask=mask)
+            grid[x, y, :] = np.mean(masked, axis=1)
+    grid[1:n - 1, :, :] = np.mean(grid[1:n - 1, :, :], axis=0)[None,:,:]
+    grid[:, 1:n - 1, :] = np.mean(grid[:, 1:n - 1, :], axis=1)[:,None,:]
 
-        for x in range(n):
-            for y in range(n):
-                boolean = np.logical_and(np.logical_and(xyv[0] > x / n * sx, xyv[0] < (x + 1) / n * sx),
-                                         np.logical_and(xyv[1] > y / n * sy, xyv[1] < (y + 1) / n * sy))
-                bsum = np.sum(boolean)
-                if bsum != 0:
-                    grid[x, y, unit] = np.sum(xyv[2][boolean]) / bsum
-        #make grid structure like in grid plot:
-        for d in range(n):
-            grid[1:n - 1, d, unit] = np.mean(grid[1:n - 1, d, unit])
-
-        for d in range(n):
-            grid[d, 1:n - 1, unit] = np.mean(grid[d, 1:n - 1, unit])
+    for unit in range(number_of_units):
         #now every point within a ROI contains the mean firingrate of the ROI it belongs tog
         #take one point from every ROI:
         takenfrom = [(n - 1, 0), (0, 0), (0, n - 1), (n - 1, n - 1), (n - 1, 1), (1, 0), (0, 1), (1, n - 1), (1, 1)]
@@ -645,7 +572,7 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
             if mean == 0:
                 mean = 1
             ROI[unit, index] = (grid[:, :, unit][takenfrom[index]] - mean) * 100 / mean #assign percent difference to unit mean to every ROI
-        if save or show:
+        if (save or show) and single_figures:
 
             fig = plt.figure(figsize=(5, 5))
             plt.bar(np.arange(9), ROI[unit]) #arrangement of the ROIs: {0: 'top right', 1: 'top left', 2: 'bottom left',
@@ -660,6 +587,30 @@ def plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, 
                     plt.title('firing rate all mua')
                 plt.show()
             plt.close(fig)
+    if (save or show) and multi_figure:
+        fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
+        fig.set_figheight(15)
+        fig.set_figwidth(15)
+        for unit in range(number_of_units):
+            axs[unit // 4, unit % 4].bar(np.arange(9), ROI[unit]) #arrangement of the ROIs: {0: 'top right', 1: 'top left', 2: 'bottom left',
+                                             # 3: 'bottom right', 4: 'right', 5: 'top', 6: 'left', 7: 'bottom', 8: 'middle'}
+            axs[unit // 4, unit % 4].set_xticks(np.arange(9))
+            axs[unit // 4, unit % 4].set_xticklabels(np.arange(9))
+
+            axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
+
+        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        # for ax_to_delete in axes_to_delete:
+        #     fig.delaxes(ax_to_delete)
+        if save:
+            plt.savefig(file_name + 'multiple' + '.jpg')
+        if show:
+            fig.suptitle(file_name)
+            plt.show()
+        plt.close(fig)
+
+
+
     if do_archive:
         archive.loc[:, idx['ROI_OF', :]] = ROI
     if save or show: #plot mean of all single unit plots
@@ -759,19 +710,19 @@ def get_of_score(rois):
 #plot number of spikes per range of phases for every unit
 #plot plot average number of spikes per range of phases, where every unit contributes the same
 #makes theta_phase of archive
-def plot_phase(vHIP_pads, circus, plot_folder, experiment_name, off, physio_trigger, cluster_names, archive,
+def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experiment_name, cluster_names, archive,
                environment, number_of_bins,
                show, save, do_archive, single_figures, multi_figure):
-    offset = (physio_trigger + off) * 20000 // 50
+
     mode = 'phase'
     key = 'theta_phase_' + environment
     unit_keys = [key + '_' + str(vHIP_pad) for vHIP_pad in vHIP_pads] #column of archive to save to
     file_name = plot_folder + experiment_name + '_' + mode + '_'
     # phase angle in range(0,number of bins):
-    phase = (np.load(circus + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180) * number_of_bins // 360
-    original_data = np.load(circus + 'original_' + experiment_name + '.npy')[:, offset:]
+    phase = phase_aligned
+
     for i, unit in enumerate(cluster_names):
-        mask = np.tile(np.invert(original_data[i]), (phase.shape[0], 1))  #mask phase values where no spike ocurred
+        mask = np.tile(np.invert(original_aligned[i]), (phase.shape[0], 1))  #mask phase values where no spike ocurred
         masked = np.ma.masked_array(phase, mask=mask)
         binned = np.zeros((masked.shape[0], number_of_bins))
 #         for angle in range(-180 , 180):
