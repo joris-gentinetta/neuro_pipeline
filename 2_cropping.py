@@ -78,8 +78,9 @@ for index, experiment_name in enumerate(experiment_names):
         vHIP_concatenated = vHIP_concatenated[:, boolean_sampling_rate]
         mPFC_spike_range = mPFC_spike_range[:, boolean_sampling_rate]
         xy = xy[:, boolean_frame_rate]
+        np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range)
+
     np.save(target_folder + 'movement_files/' + experiment_name, xy)
-    np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range)
 
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
@@ -89,7 +90,7 @@ for index, experiment_name in enumerate(experiment_names):
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
     np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase)
     logbook[index] = data_for_spikesorting.shape[0]
-np.save(target_folder + 'logbook', logbook)
+np.save(target_folder + 'utils/logbook', logbook)
 
 
 
@@ -119,7 +120,7 @@ print(converter.returncode)
 
 # start viewer
 viewer_command = 'circus-gui-python ' + circus_entrypoint
-with open(target_folder + 'start_viewer.txt', 'w') as f:
+with open(target_folder + 'utils/start_viewer.txt', 'w') as f:
     f.write(viewer_command)
 args = shlex.split(viewer_command)
 
@@ -129,4 +130,4 @@ viewer = subprocess.run(args, stdout=subprocess.PIPE,
 print(viewer.returncode)
 # print(viewer.stdout)
 
-print('cropping for animal {} done!'.format(animal))
+print('Cropping for animal {} done!'.format(animal))

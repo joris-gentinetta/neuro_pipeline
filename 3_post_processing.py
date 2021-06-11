@@ -18,8 +18,8 @@ if 'circus' in experiment_names:
     experiment_names.remove('circus')
 experiment_name = experiment_names[0]
 sub_folder = 'circus'
-circus = animal_folder + sub_folder + '/'
-folder = circus + 'dat_files_mod/' + experiment_name + '_0.GUI/'
+target_folder = animal_folder + sub_folder + '/'
+folder = target_folder + 'dat_files_mod/' + experiment_name + '_0.GUI/'
 
 stimes = 'spike_times.npy'
 sclusters = 'spike_clusters.npy'
@@ -38,7 +38,7 @@ for i in range(idx.size):
         indexer[idx[i]] = n
         n+=1
 
-logbook_1 = np.load(circus + 'logbook.npy')
+logbook_1 = np.load(target_folder + 'utils/logbook.npy')
 logbook_2 = np.zeros(len(experiment_names)+1)
 logbook_2[1:] = logbook_1[:len(experiment_names)]
 
@@ -70,7 +70,7 @@ cluster_names = np.zeros(data.shape[0], dtype = np.uint8)
 for i in range(1,cluster_names.size):
     cluster_names[i] =  np.where(indexer == i)[0]
 cluster_names[0] = -1
-np.save(circus + 'cluster_names', cluster_names)
+np.save(target_folder + 'utils/cluster_names', cluster_names)
 
 
 # lw =0.4
@@ -83,8 +83,9 @@ np.save(circus + 'cluster_names', cluster_names)
 # #plt.ylim(-250, 250)
 #
 
+
 for i in range(logbook_3.size-1):
-    np.save(circus + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
-    np.save(circus + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
+    np.save(target_folder + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
+    np.save(target_folder + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
 
 print('post processing for animal {} done!'.format(animal))

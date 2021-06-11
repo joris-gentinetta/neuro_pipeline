@@ -14,6 +14,7 @@ import time
 import subprocess
 import shlex
 from natsort import natsorted
+import utils
 
 from scipy.signal import hilbert
 from scipy.signal import butter, sosfiltfilt
@@ -34,30 +35,10 @@ if (os.path.exists(target_folder)):
     if delete_circus_folder:
         shutil.rmtree(target_folder)
         time.sleep(5)
-        os.mkdir(target_folder)
-        os.mkdir(target_folder + 'dat_files')
-        os.mkdir(target_folder + 'vHIP_phase')
-        os.mkdir(target_folder + 'numpy_files')
-        os.mkdir(target_folder + 'dat_files_mod')
-        os.mkdir(target_folder + 'mPFC_raw')
-        os.mkdir(target_folder + 'vHIP_raw')
-        os.mkdir(target_folder + 'mPFC_spike_range')
-        os.mkdir(target_folder + 'movement_files')
-
-
+        utils.create_directories(target_folder)
 else:
-    os.mkdir(target_folder)
-    os.mkdir(target_folder + 'dat_files')
-    os.mkdir(target_folder + 'vHIP_phase')
-    os.mkdir(target_folder + 'numpy_files')
-    os.mkdir(target_folder + 'dat_files_mod')
-    os.mkdir(target_folder + 'mPFC_raw')
-    os.mkdir(target_folder + 'vHIP_raw')
-    os.mkdir(target_folder + 'movement_files')
+    utils.create_directories(target_folder)
 
-
-    # else:
-    #     raise KeyboardInterrupt('Config step was already done.')
 
 experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
@@ -154,8 +135,8 @@ vHIP_channels = list(np.array(vHIP_channels)[np.array(vHIP_impedance) < max_impe
 # pads[x] denotes the pad corresponding to data['amplifier_data'][x]
 mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels]
 vHIP_pads = [pta.index(channel) + 1 for channel in vHIP_channels]
-np.save(target_folder + 'vHIP_pads', vHIP_pads)
-np.save(target_folder + 'mPFC_pads', mPFC_pads)
+np.save(target_folder + 'utils/vHIP_pads', vHIP_pads)
+np.save(target_folder + 'utils/mPFC_pads', mPFC_pads)
 # probe file 'graph'
 graph = []
 
@@ -209,17 +190,7 @@ for index, experiment_name in tqdm(enumerate(experiment_names)):
     np.save(target_folder + 'mPFC_spike_range/' + experiment_names[index], spike_filtered)#use this data to make cutout timestamps
 
 
-# for index, data_folder in tqdm(enumerate(data_folders)):
-#     # raw = tosave[:, :total_size] - np.median(tosave[:, :total_size], axis = 0)[None, :]
-#     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-#     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
-#     hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
-#     data_for_spikesorting = np.transpose(mPFC_concatenated)
-#     # save files:
-#     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-#     np.save(target_folder + 'phase_files/' + experiment_names[index], hilbert_phase)
-#     logbook[index] = total_size-physio_trigger
-# np.save(target_folder + 'logbook', logbook)
+
 
 # prepare probe.prb file
 radius = 100
@@ -240,7 +211,7 @@ with open(target_folder + 'probe.prb', 'a') as f:
 # prepare parameters.params file
 cap2 = ('[data]'
         + '\nnb_channels = ' + str(total_nb_channels)
-        + '\nmapping = ' + target_folder + 'probe.prb'
+        + '\nmapping = ' + target_folder + 'utils/probe.prb'
         + '\noutput_dir = ' + target_folder + 'dat_files_mod')
 
 # create parameters.params file
@@ -252,4 +223,4 @@ with open(templates + 'parameters.params', 'r') as f:
 with open(param_file, 'a') as f:
     f.write(t)
 
-print('cropping for animal {} done!'.format(animal))
+print('Config for animal {} done!'.format(animal))

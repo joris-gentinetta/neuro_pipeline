@@ -12,7 +12,7 @@ import time
 import numpy as np
 import pickle5 as pkl
 
-import plots
+import day_plots
 
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -79,30 +79,30 @@ for experiment_name in experiment_names:
     cluster_names = np.load(target_folder + 'cluster_names.npy')
     #################################
     if 'raw' in toplot:
-        plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
-                       , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
+        day_plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger
+                           , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
     #################################
     if 'classic' in toplot:
-        plots.plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                           physio_trigger, cluster_names, sigma=10, minp=0, maxp=95, n=150, show=show, save=save)
+        day_plots.plot_classic(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
+                               physio_trigger, cluster_names, sigma=10, minp=0, maxp=95, n=150, show=show, save=save)
     #################################
     if environment == 'EZM':
         if 'environment' in toplot:
-            plots.plot_circle(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                              cluster_names, n=360, sigma=-1, show=show, save=save)
+            day_plots.plot_circle(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
+                                  cluster_names, n=360, sigma=-1, show=show, save=save)
         if 'transitions' in toplot:
             # plotmode is one of ['std', 'percent']
-            plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger,
-                                   mode='lingering_exittime', plotmode='percent', n=200, m=5, show=show, save=save)
+            day_plots.plot_transitions(plot_folder, experiment_name, raw_data, events, cluster_names, video_trigger,
+                                       mode='lingering_exittime', plotmode='percent', n=200, m=5, show=show, save=save)
         if 'statistics' in toplot:
-            plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                            physio_trigger,
-                            cluster_names, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save)
+            day_plots.plot_arms(plot_folder, experiment_name, raw_data, events, video_trigger, off,
+                                physio_trigger,
+                                cluster_names, transition_size=5, minp=0, maxp=90, n=150, show=show, save=save)
     else:
         if 'environment' in toplot:
-            plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                            cluster_names, minp=0, maxp=100, n=5, show=show, save=save)
+            day_plots.plot_grid(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
+                                cluster_names, minp=0, maxp=100, n=5, show=show, save=save)
         if 'statistics' in toplot:
-            plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
-                               cluster_names, n=5, show=show, save=save)
+            day_plots.plot_corners(plot_folder, experiment_name, raw_data, events, video_trigger, off, physio_trigger,
+                                   cluster_names, n=5, show=show, save=save)
 #################################

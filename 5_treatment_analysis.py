@@ -30,7 +30,7 @@ import shutil
 import time
 import numpy as np
 import pickle5 as pkl
-import overall_plots
+import treatment_plots
 
 treatment_dict = {'none': '1', 'saline': '2', 'medication': '3'}
 _ , animals = (list(t) for t in zip(*sorted(zip([int(animal) for animal in animals], animals))))
@@ -98,17 +98,17 @@ for data_separation in data_separations:
     else:
         raise Exception('invalid data separation entry: ' + data_separation)
     if 'circle' in toplot:
-        overall_plots.plot_circle( plot_folder,  data.loc[:,'ROI_EZM'], data_separation, show=show, save=save)
+        treatment_plots.plot_circle(plot_folder, data.loc[:, 'ROI_EZM'], data_separation, show=show, save=save)
     if 'grid' in toplot:
-        overall_plots.plot_grid( plot_folder,  data.loc[:,'ROI_OF'], data_separation, show=show, save=save)
+        treatment_plots.plot_grid(plot_folder, data.loc[:, 'ROI_OF'], data_separation, show=show, save=save)
     if 'arms' in toplot:
-        overall_plots.plot_arms( plot_folder,  data.loc[:,'ROI_EZM'], data_separation, show=show, save=save)
+        treatment_plots.plot_arms(plot_folder, data.loc[:, 'ROI_EZM'], data_separation, show=show, save=save)
     if 'corners' in toplot:
-        overall_plots.plot_corners( plot_folder,  data.loc[:,'ROI_OF'], data_separation, show=show, save=save)
+        treatment_plots.plot_corners(plot_folder, data.loc[:, 'ROI_OF'], data_separation, show=show, save=save)
     if 'transitions' in toplot:
         for transition_mode in transition_modes:
-            overall_plots.plot_transitions( plot_folder,  data.loc[:,transition_mode], data_separation,
-                                           mode=transition_mode, show=show, save=save)
+            treatment_plots.plot_transitions(plot_folder, data.loc[:, transition_mode], data_separation,
+                                             mode=transition_mode, show=show, save=save)
 
     if 'phase' in toplot:
         for phase_mode in phase_modes:
@@ -123,11 +123,11 @@ for data_separation in data_separations:
                 counter+=1
             mean_theta = mean_theta // counter
 
-            overall_plots.plot_phase( plot_folder,  mean_theta, data_separation, phase_mode,
-                                         show=show, save=save)
+            treatment_plots.plot_phase(plot_folder, mean_theta, data_separation, phase_mode,
+                                       show=show, save=save)
             if len(animals) == 1:
-                overall_plots.plot_phase_all_pads(plot_folder,  data.loc[:,pad_columns], pad_columns, data_separation, phase_mode,
-                                         show=show, save=save)
+                treatment_plots.plot_phase_all_pads(plot_folder, data.loc[:, pad_columns], pad_columns, data_separation, phase_mode,
+                                                    show=show, save=save)
 
 
 print('treatment_analysis done for animals: {}, treatment: {}, score: {}, threshold: {}'.format(animals, treatment, score, threshold))
