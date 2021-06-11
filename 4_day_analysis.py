@@ -140,7 +140,6 @@ for experiment_name in experiment_names:
         if 'transitions' in toplot:
             for mode in transition_keys:
                 event_indices = events['transitions'][mode]
-
                 archive = day_plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices,
                                                 archive, single_figures, multi_figure,
                                                 n=250, number_of_bins=20, show=show, save=save, do_archive=do_archive)
