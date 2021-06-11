@@ -65,6 +65,7 @@ for index, experiment_name in enumerate(experiment_names):
     mPFC_concatenated = np.load(target_folder + 'mPFC_raw/' + experiment_name + '.npy')
     vHIP_concatenated = np.load(target_folder + 'vHIP_raw/' + experiment_name + '.npy')
     if os.path.exists(target_folder + 'cutter/' + experiment_name + '.npy'):
+        mPFC_spike_range = np.load(target_folder + 'mPFC_spike_range/' + experiment_name)
         cutter = np.load(target_folder + 'cutter/' + experiment_name + '.npy')
         # first row start time of cuts, second row stop time, dtype uint32
         boolean_sampling_rate = np.ones(mPFC_concatenated.shape[1], dtype=np.bool)
@@ -75,8 +76,10 @@ for index, experiment_name in enumerate(experiment_names):
             boolean_frame_rate[cutter[0, cut]: cutter[1, cut]] = 0
         mPFC_concatenated = mPFC_concatenated[:, boolean_sampling_rate]
         vHIP_concatenated = vHIP_concatenated[:, boolean_sampling_rate]
+        mPFC_spike_range = mPFC_spike_range[:, boolean_sampling_rate]
         xy = xy[:, boolean_frame_rate]
     np.save(target_folder + 'movement_files/' + experiment_name, xy)
+    np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range)
 
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
@@ -84,7 +87,7 @@ for index, experiment_name in enumerate(experiment_names):
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-    np.save(target_folder + 'phase_files/' + experiment_name, hilbert_phase)
+    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase)
     logbook[index] = data_for_spikesorting.shape[0]
 np.save(target_folder + 'logbook', logbook)
 

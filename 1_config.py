@@ -36,7 +36,7 @@ if (os.path.exists(target_folder)):
         time.sleep(5)
         os.mkdir(target_folder)
         os.mkdir(target_folder + 'dat_files')
-        os.mkdir(target_folder + 'phase_files')
+        os.mkdir(target_folder + 'vHIP_phase')
         os.mkdir(target_folder + 'numpy_files')
         os.mkdir(target_folder + 'dat_files_mod')
         os.mkdir(target_folder + 'mPFC_raw')
@@ -48,7 +48,7 @@ if (os.path.exists(target_folder)):
 else:
     os.mkdir(target_folder)
     os.mkdir(target_folder + 'dat_files')
-    os.mkdir(target_folder + 'phase_files')
+    os.mkdir(target_folder + 'vHIP_phase')
     os.mkdir(target_folder + 'numpy_files')
     os.mkdir(target_folder + 'dat_files_mod')
     os.mkdir(target_folder + 'mPFC_raw')
@@ -154,8 +154,8 @@ vHIP_channels = list(np.array(vHIP_channels)[np.array(vHIP_impedance) < max_impe
 # pads[x] denotes the pad corresponding to data['amplifier_data'][x]
 mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels]
 vHIP_pads = [pta.index(channel) + 1 for channel in vHIP_channels]
-np.save(target_folder + 'phase_files/' + 'vHIP_pads', vHIP_pads)
-np.save(target_folder + 'numpy_files/' + 'mPFC_pads', mPFC_pads)
+np.save(target_folder + 'vHIP_pads', vHIP_pads)
+np.save(target_folder + 'mPFC_pads', mPFC_pads)
 # probe file 'graph'
 graph = []
 

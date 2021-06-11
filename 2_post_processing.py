@@ -1,4 +1,4 @@
-animal = '309'
+animal = '222'
 
 
 import h5py
@@ -52,7 +52,6 @@ logbook_3 = logbook_3*50//20000
 
 original_spiketimes = np.load(folder + stimes)
 spiketimes = original_spiketimes*50//20000  #sampled at 50Hz
-q  = spiketimes[-1] #remove
 clusters = np.load(folder + sclusters)
 data = np.zeros((int(indexer.max()+1), logbook_3[-1]), dtype=np.uint8)
 original_data = np.zeros((int(indexer.max()+1), original_logbook_3[-1]), dtype=bool)
@@ -85,7 +84,7 @@ np.save(circus + 'cluster_names', cluster_names)
 #
 
 for i in range(logbook_3.size-1):
-    np.save(circus + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
-    np.save(circus + 'original_' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
+    np.save(circus + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
+    np.save(circus + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
 
 print('post processing for animal {} done!'.format(animal))

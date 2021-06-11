@@ -1,7 +1,8 @@
-animal = '211' #one of the sets with one day
-toplot = ['phase']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
-             # for full archive need at least ['transitions', 'statistics', 'phase']
-max_duration = 60 #seconds # if negative, crops from end
+animal = '211'  # one of the sets with one day
+toplot = [
+    'phase']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+# for full archive need at least ['transitions', 'statistics', 'phase']
+max_duration = 60  # seconds # if negative, crops from end
 
 delete_plot_folder = False
 delete_archive = False
@@ -24,28 +25,32 @@ from natsort import natsorted
 make_path_visible = 0.0001
 
 transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
-                  'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
-                  'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
-                  'nosedip_starttime', 'nosedip_stoptime'] #subselection of ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
-                  # 'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
-                  # 'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
-                  # 'nosedip_starttime', 'nosedip_stoptime']
+                   'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime',
+                   'prolonged_open_closed_exittime',
+                   'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime',
+                   'withdraw_exittime',
+                   'nosedip_starttime',
+                   'nosedip_stoptime']  # subselection of ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
+# 'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
+# 'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
+# 'nosedip_starttime', 'nosedip_stoptime']
 
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
                  '2021-02-26_mBWfus012_EZM_ephys': 35}
-                # '2021-03-13_mBWfus011_EZM_ephys': 0}#todo
+# '2021-03-13_mBWfus011_EZM_ephys': 0}#todo
 
 
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
-framerate = 50
+frame_rate = 50
+sampling_rate = 20000
 
-number_of_bins_transitions = 20 #in 10 second window around transitions
-number_of_bins_phase = 8 #phaseplot
-#factor = 360//number_of_bins_phase
+number_of_bins_transitions = 20  # in 10 second window around transitions
+number_of_bins_phase = 8  # phaseplot
+# factor = 360//number_of_bins_phase
 
 animal_folder = data_folder + animal + '/'
 experiment_names = natsorted(os.listdir(animal_folder))
@@ -70,14 +75,14 @@ level_1 = ['characteristics' for _ in range(12)] \
           + ['open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
           + ['open_closed_exittime' for _ in range(number_of_bins_transitions)] \
           + ['closed_open_entrytime' for _ in range(number_of_bins_transitions)] \
-          + ['closed_open_exittime' for _ in range(number_of_bins_transitions)]\
+          + ['closed_open_exittime' for _ in range(number_of_bins_transitions)] \
           + ['lingering_entrytime' for _ in range(number_of_bins_transitions)] \
           + ['lingering_exittime' for _ in range(number_of_bins_transitions)] \
           + ['prolonged_open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
           + ['prolonged_open_closed_exittime' for _ in range(number_of_bins_transitions)] \
-          + ['prolonged_closed_open_entrytime' for _ in range(number_of_bins_transitions)]\
-          + ['prolonged_closed_open_exittime' for _ in range(number_of_bins_transitions)]\
-          + ['withdraw_entrytime' for _ in range(number_of_bins_transitions)]\
+          + ['prolonged_closed_open_entrytime' for _ in range(number_of_bins_transitions)] \
+          + ['prolonged_closed_open_exittime' for _ in range(number_of_bins_transitions)] \
+          + ['withdraw_entrytime' for _ in range(number_of_bins_transitions)] \
           + ['withdraw_exittime' for _ in range(number_of_bins_transitions)] \
           + ['nosedip_starttime' for _ in range(number_of_bins_transitions)] \
           + ['nosedip_stoptime' for _ in range(number_of_bins_transitions)]
@@ -88,15 +93,13 @@ for pad in vHIP_pads:
     level_1 += ['theta_phase_before_' + str(pad) for _ in range(number_of_bins_phase)]
     level_1 += ['theta_phase_after_' + str(pad) for _ in range(number_of_bins_phase)]
 
-
-
 five_sec_range = list(np.arange(number_of_bins_transitions))
 transition_ranges = copy.copy(five_sec_range)
 for i in range(13):
     transition_ranges.extend(five_sec_range)
 degree360 = list(np.arange(number_of_bins_phase))
 phase_ranges = copy.copy(degree360)
-for i in range(4*len(vHIP_pads)-1):
+for i in range(4 * len(vHIP_pads) - 1):
     phase_ranges.extend(degree360)
 level_2 = ['ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
            'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
@@ -125,82 +128,65 @@ for experiment_name in experiment_names:
         continue
 
     eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
-    datafile = target_folder + experiment_name + '.npy'
-    ptriggerfile = target_folder + experiment_name + '_trigger.npy'
+    spikes_50_file = target_folder + 'spikes_50_file/' + experiment_name + '.npy'
+    # ptriggerfile = target_folder + experiment_name + '_trigger.npy'
     plot_folder = all_plots + experiment_name + '/'
 
     if not os.path.exists(plot_folder):
         os.mkdir(plot_folder)
 
+    # physio_trigger = int(np.load(ptriggerfile) * frame_rate // 20000)
 
-    physio_trigger = int(np.load(ptriggerfile) * framerate // 20000)
-
-
-    #get events/movement
+    # get events/movement
     with open(eventfile, 'rb') as f:
         events = pkl.load(f)
-    movement = events['movement']
 
-    #create offset if mouse is not present at video_trigger
-    accomodation = 20
-    if experiment_name in mouse_is_late:
-        off = (mouse_is_late[experiment_name] + accomodation)*framerate
-    else:
-        off = 0
-    #get raw data
-    raw_data = np.load(datafile) * framerate
-    cutter = np.load(target_folder+'cutter.npy') # first row start time of cuts, second row stop time, dtype uint32
-    # #has to be ordered by start time, intervals can not overlap #50 Hz
-    physio_trigger = physio_trigger + off
-
-    adapted_physio_trigger = physio_trigger
-
-    xy = np.array([movement['calib_traj_x'], movement['calib_traj_y']], dtype=np.float32)
-    # boolean = np.ones(xy.shape[1], dtype=np.bool)
-    # for cut in range(cutter.shape[1]):
-    #     boolean[cutter[0, cut]: cutter[1, cut]] = 0
-    #     if cutter[0,cut]>physio_trigger:
-    #         break
-    #     if cutter[1,cut] <= physio_trigger:
-    #         adapted_physio_trigger -=(cutter[1,cut]-cutter[0,cut])
-    #     else:
-    #         adapted_physio_trigger -= (physio_trigger - cutter[0, cut])
-    # adapted_video_trigger = video_trigger + off - (physio_trigger-adapted_physio_trigger)
-    # xy = xy[:, boolean]
-    #aligned[0] = x coordinate, aligned[1] = y coordinate, aligned[3:] units firingrate
+    spikes_50 = np.load(spikes_50_file) * frame_rate
+    xy = np.load(target_folder + 'movement_files/' + experiment_name)
     aligned = np.empty(
-        (2+raw_data.shape[0], min(xy.shape[1] - adapted_video_trigger, raw_data.shape[1] - adapted_physio_trigger)),
+        (2 + spikes_50.shape[0], min(xy.shape[1], spikes_50.shape[1])),
         dtype=np.float32)
 
-    aligned[0] =xy[0][adapted_video_trigger: aligned.shape[1] + adapted_video_trigger]  # x coordinates
-    aligned[1] = xy[1][adapted_video_trigger: aligned.shape[1] + adapted_video_trigger]  # y coordinates
-    aligned[2:raw_data.shape[0]+2] = raw_data[:adapted_physio_trigger: aligned.shape[1] + adapted_physio_trigger] + make_path_visible
+    aligned[0] = xy[0][: aligned.shape[1]]  # x coordinates
+    aligned[1] = xy[1][: aligned.shape[1]]  # y coordinates
+    aligned[2:] = spikes_50[:, : aligned.shape[1]] + make_path_visible
 
-    #crop to desired length
-    if max_duration > 0:
-        aligned = aligned[:, :max_duration*50]
+    # crop to desired length
+    if max_duration >= 0:
+        aligned = aligned[:, :max_duration * frame_rate]
     else:
-        aligned = aligned[:, max_duration*50:]
+        aligned = aligned[:, max_duration * frame_rate:]
 
     if do_archive:
-        archive.loc[:, ('characteristics', 'mean_'+environment)] = np.mean(aligned[2:], axis=1)
-    #################################
+        archive.loc[:, ('characteristics', 'mean_' + environment)] = np.mean(aligned[2:], axis=1)
+
+#################################
     if 'phase' in toplot:
-        offset = (physio_trigger + off) * 20000 // 50
-        phase_aligned = (np.load(target_folder + 'phase_files/' + experiment_name + '.npy')[:, offset:] + 180) * number_of_bins_phase // 360
-        original_aligned = np.load(target_folder + 'original_' + experiment_name + '.npy')[:, offset:]
-        archive = plots.plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experiment_name, cluster_names, archive,
-               environment, number_of_bins = number_of_bins_phase, show=show,
-                                   save=save, do_archive=do_archive, single_figures=single_figures, multi_figure=multi_figure)
+        #    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase)
+        phase_aligned = (np.load(
+            target_folder + 'vHIP_phase/' + experiment_name + '.npy') + 180) * number_of_bins_phase // 360
+        spikes_20000_aligned = np.load(target_folder + 'spikes_20000/' + experiment_name + '.npy')
+
+        if max_duration >= 0:
+            phase_aligned = phase_aligned[:, :max_duration * sampling_rate]
+            spikes_20000_aligned = spikes_20000_aligned[:, :max_duration * sampling_rate]
+
+        else:
+            phase_aligned = phase_aligned[:, max_duration * sampling_rate:]
+            spikes_20000_aligned = spikes_20000_aligned[:, max_duration * sampling_rate:]
+
+        archive = plots.plot_phase(phase_aligned, spikes_20000_aligned, vHIP_pads, plot_folder, experiment_name,
+                                   cluster_names, archive,
+                                   environment, number_of_bins=number_of_bins_phase, show=show,
+                                   save=save, do_archive=do_archive, single_figures=single_figures,
+                                   multi_figure=multi_figure)
+
 #################################
     if environment == 'EZM':
-        if 'raw' in toplot:
-            plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                           physio_trigger
-                           , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
         if 'trace' in toplot:
             plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
-                               single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150, show=show, save=save, filter=False)
+                             single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
+                             show=show, save=save, filter=False)
         if 'trace_filtered' in toplot:
             plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
                              single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
@@ -209,25 +195,21 @@ for experiment_name in experiment_names:
         if 'environment' in toplot:
             plots.plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures,
                               multi_figure=multi_figure,
-                n=360, sigma=-1, show=show, save=save) #sigma = -1 sets sigma matching n
+                              n=360, sigma=-1, show=show, save=save)  # sigma = -1 sets sigma matching n
         if 'transitions' in toplot:
             for mode in transition_keys:
                 event_indices = events['transitions'][mode]
-                archive = plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices
-                                            , video_trigger, archive, single_figures, multi_figure,
-                     n=250, number_of_bins=20, show=show, save=save, do_archive=do_archive)
-        #todo remove comment signs
-        # if 'statistics' in toplot:
-        #     archive = plots.plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures,
-        #                               multi_figure, transition_size=5, n=150, show=show, save=save, do_archive=do_archive)
 
+                archive = plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices,
+                                            archive, single_figures, multi_figure,
+                                            n=250, number_of_bins=20, show=show, save=save, do_archive=do_archive)
+        if 'statistics' in toplot:
+            archive = plots.plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures,
+                                      multi_figure, transition_size=5, n=150, show=show, save=save,
+                                      do_archive=do_archive)
+
+#################################
     elif environment == 'OFT':
-        if 'raw' in toplot:
-            plots.plot_raw(environment, plot_folder, experiment_name, raw_data, events, video_trigger, off,
-                           physio_trigger
-                           , cluster_names, minp=0, maxp=90, n=150, show=show, save=save)
-        #################################
-
         if 'trace' in toplot:
             plots.plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names,
                              single_figures=single_figures, multi_figure=multi_figure, sigma=10, minp=0, maxp=95, n=150,
@@ -239,23 +221,29 @@ for experiment_name in experiment_names:
                              show=show, save=save, filter=True)
 
         if 'environment' in toplot:
-            plots.plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures, multi_figure=multi_figure, minp=0,
-              maxp=100, n=5, show=show, save=save)
+            plots.plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figures=single_figures,
+                            multi_figure=multi_figure, minp=0,
+                            maxp=100, n=5, show=show, save=save)
         if 'statistics' in toplot:
-            archive = plots.plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures=single_figures, multi_figure=multi_figure,
-                  n=4, show=show, save=save, do_archive=do_archive)
+            archive = plots.plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive,
+                                         single_figures=single_figures, multi_figure=multi_figure,
+                                         n=4, show=show, save=save, do_archive=do_archive)
 
-    #################################
+#################################
     if do_archive:
         if environment == 'EZM':
-            archive.loc[:, ('characteristics','ezm_closed_score')], archive.loc[:, ('characteristics', 'ezm_transition_score')],\
-            archive.loc[:, ('characteristics', 'ezm_closed')], archive.loc[:, ('characteristics', 'ezm_transition')] = plots.get_ezm_score(archive.loc[:, 'ROI_EZM'].values)
+            archive.loc[:, ('characteristics', 'ezm_closed_score')], archive.loc[:,
+                                                                     ('characteristics', 'ezm_transition_score')], \
+            archive.loc[:, ('characteristics', 'ezm_closed')], archive.loc[:, ('characteristics',
+                                                                               'ezm_transition')] = plots.get_ezm_score(
+                archive.loc[:, 'ROI_EZM'].values)
         elif environment == 'OFT':
-            archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:, ('characteristics', 'of_middle_score')],\
-            archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:, ('characteristics', 'of_middle')] = plots.get_of_score(archive.loc[:, 'ROI_OF'].values)
+            archive.loc[:, ('characteristics', 'of_corners_score')], archive.loc[:,
+                                                                     ('characteristics', 'of_middle_score')], \
+            archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:,
+                                                               ('characteristics', 'of_middle')] = plots.get_of_score(
+                archive.loc[:, 'ROI_OF'].values)
 if do_archive:
     archive.to_pickle(target_folder + 'archive.pkl')
 
-
 print('analysis for animal {} done!'.format(animal))
-
