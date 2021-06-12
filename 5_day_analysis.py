@@ -5,7 +5,6 @@ toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'stati
 max_duration = 60  # seconds # if negative, crops from end
 
 delete_plot_folder = True
-delete_archive = True
 show = False
 save = True
 do_archive = False
@@ -53,24 +52,15 @@ experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
     experiment_names.remove('circus')
 
-# delete old plots
-if os.path.exists(all_plots):
-    if delete_plot_folder:
-        shutil.rmtree(all_plots, ignore_errors=True)
-        time.sleep(5)
-        os.mkdir(all_plots)
-else:
-    os.mkdir(all_plots)
+
 
 cluster_names = np.load(target_folder + 'utils/cluster_names.npy')
 vHIP_pads = np.load(target_folder + 'utils/vHIP_pads.npy')
 
-if os.path.exists(target_folder + 'archive.pkl') and not delete_archive:
-    archive = pd.read_pickle(target_folder + 'archive.pkl')
-else:
-    archive = utils.create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase)
+archive = pd.read_pickle(target_folder + 'archive.pkl')
 
 for experiment_name in experiment_names:
+    plot_folder = all_plots + experiment_name + '/'
 
     if experiment_name[-7] == 'M':
         environment = 'EZM'
@@ -86,10 +76,7 @@ for experiment_name in experiment_names:
     eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
     spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy'
     # ptriggerfile = target_folder + experiment_name + '_trigger.npy'
-    plot_folder = all_plots + experiment_name + '/'
 
-    if not os.path.exists(plot_folder):
-        os.mkdir(plot_folder)
 
     # physio_trigger = int(np.load(ptriggerfile) * frame_rate // 20000)
 

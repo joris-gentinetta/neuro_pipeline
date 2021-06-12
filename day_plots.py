@@ -739,7 +739,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
 
     for i, unit in enumerate(cluster_names):
         mask = np.tile(np.invert(original_aligned[i]), (phase.shape[0], 1))  # mask phase values where no spike ocurred
-        masked = np.ma.masked_array(phase, mask=mask)
+        masked = np.ma.masked_array(phase, mask=mask) #todo
         binned = np.zeros((masked.shape[0], number_of_bins))
         #         for angle in range(-180 , 180):
         #             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)

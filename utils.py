@@ -42,8 +42,10 @@ def create_aligned(spikes_50, xy, max_duration, make_path_visible):
         aligned = aligned[:, max_duration * frame_rate:]
     return aligned
 
-def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase):
-    level_1 = ['characteristics' for _ in range(12)] \
+def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase, number_of_bins_isi):
+    level_1 = ['characteristics' for _ in range(17)] \
+              + ['mean_waveform' for _ in range(60)] \
+              + ['isi' for _ in range(number_of_bins_isi)]\
               + ['ROI_EZM' for _ in range(8)] \
               + ['ROI_OF' for _ in range(9)] \
               + ['open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
@@ -75,8 +77,10 @@ def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_
     phase_ranges = copy.copy(degree360)
     for i in range(4 * len(vHIP_pads) - 1):
         phase_ranges.extend(degree360)
-    level_2 = ['ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
+    level_2 = ['pad', 'data_row', 'amplitude', 'overall_firing_rate', 'purity', 'ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
                'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
+              +[i for i in range(60)]\
+              +[ i for i in range(number_of_bins_isi)]\
               + [i for i in range(8)] \
               + [i for i in range(9)] \
               + transition_ranges \

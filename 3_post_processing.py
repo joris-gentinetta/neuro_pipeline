@@ -1,5 +1,5 @@
 ######################################
-animal = '411'
+animal = '211'
 alert_when_done = True
 ######################################
 
@@ -10,7 +10,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 from natsort import natsorted
-from utils import alert
+import utils
 
 
 
@@ -28,7 +28,9 @@ sclusters = 'spike_clusters.npy'
 infofile = 'cluster_info.tsv'
 
 
-
+number_of_bins_transitions = 20  # in 10 second window around transitions
+number_of_bins_phase = 8  # phaseplot
+number_of_bins_isi = 200
 
 info = pd.read_csv(folder+infofile, sep = '\t', index_col=0)
 idx=np.array(info.index)
@@ -71,7 +73,7 @@ for index, time in enumerate(original_spiketimes):
 cluster_names = np.zeros(data.shape[0], dtype = np.uint8)
 for i in range(1,cluster_names.size):
     cluster_names[i] =  np.where(indexer == i)[0]
-cluster_names[0] = -1
+cluster_names[0] = 255
 np.save(target_folder + 'utils/cluster_names', cluster_names)
 
 
@@ -90,6 +92,17 @@ for i in range(logbook_3.size-1):
     np.save(target_folder + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
     np.save(target_folder + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
 
+vHIP_pads = np.load(target_folder + 'utils/vHIP_pads.npy')
+archive = utils.create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase, number_of_bins_isi)
+archive.loc[:, ('characteristics', 'pad')] = info.loc[:, 'depth'] / 70 + 32
+archive.loc[:, ('characteristics', 'amplitude')] = info.loc[:, 'amp']
+archive.loc[:, ('characteristics', 'overall_firing_rate')] = info.loc[:, 'fr']
+archive.loc[:, ('characteristics', 'purity')] = info.loc[:, 'purity']
+archive.loc[:, ('characteristics', 'data_row')] = info.loc[:, 'ch']
+
+
+
+archive.to_pickle(target_folder + 'archive.pkl')
 print('post processing for animal {} done!'.format(animal))
 if alert_when_done:
-    alert()
+    utils.alert()

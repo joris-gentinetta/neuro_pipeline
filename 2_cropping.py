@@ -73,7 +73,6 @@ for index, experiment_name in enumerate(experiment_names):
         # first row start time of cuts, second row stop time, dtype uint32
         boolean_sampling_rate = np.ones(mPFC_concatenated.shape[1], dtype=np.bool)
         boolean_frame_rate = np.ones(xy.shape[1], dtype=np.bool)
-#crop spike range as well
         for cut in range(cutter.shape[1]):
             boolean_sampling_rate[cutter[0, cut]*sampling_rate//frame_rate: cutter[1, cut]*sampling_rate//frame_rate] = 0
             boolean_frame_rate[cutter[0, cut]: cutter[1, cut]] = 0
