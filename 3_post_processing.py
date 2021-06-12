@@ -1,5 +1,7 @@
-animal = '222'
-
+######################################
+animal = '411'
+alert_when_done = True
+######################################
 
 import h5py
 import numpy as np
@@ -8,7 +10,7 @@ import pandas as pd
 from tqdm import tqdm
 import os
 from natsort import natsorted
-
+from utils import alert
 
 
 
@@ -89,3 +91,5 @@ for i in range(logbook_3.size-1):
     np.save(target_folder + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
 
 print('post processing for animal {} done!'.format(animal))
+if alert_when_done:
+    alert()

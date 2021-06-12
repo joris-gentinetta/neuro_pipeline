@@ -44,20 +44,25 @@ import numpy as np
 # b = np.mean(a)
 # pass
 # original = np.load(r'E:\anxiety_ephys\012\circus\original_2021-02-26_mBWfus012_OF_ephys.npy')
-# num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
-# phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
-# pass
-import pandas as pd
-import pickle
-animal = '211'
-sorter = 'circus'
-data_folder = r'E:/anxiety_ephys/'
-target_folder = data_folder + animal + '/' + sorter + '/'
-experiment_name = '2021-03-13_mBWfus011_before_arena_ephys'
-# # archive = pd.read_pickle(target_folder + 'archive.pkl')
-# # score = archive.loc[:,('characteristics', 'ezm_closed_score')]
-# # median = np.median(score)
-# pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
-path = 'E:/anxiety_ephys/211/circus/cutter.npy'
-a = np.array([[50,100],[300,400]], dtype=np.uint32)
-np.save(path,a)
+# # num = np.load(r'E:\anxiety_ephys\012\circus\numpy_files\2021-02-26_mBWfus012_OF_ephys.npy')
+# # phase = np.load(r'E:\anxiety_ephys\012\circus\phase_files\2021-02-26_mBWfus012_OF_ephys.npy')
+# # pass
+# import pandas as pd
+# import pickle
+# animal = '211'
+# sorter = 'circus'
+# data_folder = r'E:/anxiety_ephys/'
+# target_folder = data_folder + animal + '/' + sorter + '/'
+# experiment_name = '2021-03-13_mBWfus011_before_arena_ephys'
+# # # archive = pd.read_pickle(target_folder + 'archive.pkl')
+# # # score = archive.loc[:,('characteristics', 'ezm_closed_score')]
+# # # median = np.median(score)
+# # pads = np.load(target_folder + 'numpy_files/' + 'mPFC_pads.npy')
+# path = 'E:/anxiety_ephys/211/circus/cutter.npy'
+# a = np.array([[50,100],[300,400]], dtype=np.uint32)
+# np.save(path,a)
+circus_entrypoint = 'E:/anxiety_ephys/211/circus/dat_files/1_2021-03-13_mBWfus011_before_arena_ephys_0.dat'
+target_folder = 'e:'
+viewer_command = '@echo off \ncall conda activate circus \ncircus-gui-python ' + circus_entrypoint
+with open(target_folder + 'start_viewer.bat', 'w') as f:
+    f.write(viewer_command)

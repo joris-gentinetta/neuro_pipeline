@@ -2,6 +2,15 @@ import numpy as np
 import pandas as pd
 import copy
 import os
+import winsound
+from time import sleep
+
+def alert(freq=700, duration=600, number_of_beeps=4):
+    #duration: milliseconds
+    #freq: Hz
+    for _ in range(number_of_beeps):
+        winsound.Beep(freq, duration)
+        sleep(0.2)
 
 def create_directories(target_folder):
     os.mkdir(target_folder)

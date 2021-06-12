@@ -1,8 +1,10 @@
-animal = '222'
+######################################
+animal = '211'
 max_impedance = 2500000
-max_channel = 33
 select_channels = False
 delete_circus_folder = True
+alert_when_done = True
+######################################
 
 import numpy as np
 from load_intan_rhd_format.load_intan_rhd_format import read_data
@@ -11,14 +13,13 @@ import shutil
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import time
-import subprocess
-import shlex
+
 from natsort import natsorted
 import utils
 
-from scipy.signal import hilbert
 from scipy.signal import butter, sosfiltfilt
 
+first_pad_vHIP = 33
 butter_order = 3
 theta_band = [4, 12]
 spike_band = [300, 3000]
@@ -48,65 +49,69 @@ templates = r'E:/pipe/spykingcircus_sorter_2/templates/'
 param_file = target_folder + 'dat_files/' + experiment_names[0] + '_0.params'
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat'
 
-# get common channels, create trigger files
+# get common channels, build physio_triggers
 physio_triggers = {}
 for index, data_folder in enumerate(data_folders):
     rhd_folder = data_folder + 'ephys/'
     rhd_files = natsorted(os.listdir(rhd_folder))
     amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']
     channel_set = {int(channel['native_channel_name'][2:]) for channel in amp_channels}
+
     if index == 0:
-        valid_channels = channel_set
+        valid_channels = channel_set #valid_channels contains all channels that are present in all sessions
     else:
         valid_channels = valid_channels.intersection(channel_set)
 
-    # create trigger file
+    # get physio_trigger
     r = read_data(rhd_folder + rhd_files[0])
     trigger = np.array(r['board_dig_in_data'][0])
     i, = np.where(trigger == 1)
     physio_triggers[experiment_names[index]] = i[-1]
-# pta[x] denotes the channel of pad x+1
+
+# pta[x] denotes the channel of pad x+1, pta.index(channel) denotes pad-1 of channel
 pta = [28, 29, 27, 12, 20, 21, 11, 7, 1, 8, 10, 15, 18, 23, 26, 31, 2, 6, 9, 14, 17, 22, 25, 30, 19, 24, 0, 13, 16, 5,
        4, 3, 32, 45, 43, 56, 35, 40, 60, 52, 33, 38, 41, 46, 49, 54, 57, 62, 34, 39, 42, 47, 50, 55, 58, 63, 44, 36, 59,
        61, 37, 48, 53, 51]
-ordered_channels = []
+ordered_channels = [] #ordered_channels contains all valid channels ordered by their pad number
 for i in range(64):
     for channel in valid_channels:
         if pta.index(channel) + 1 == i:
             ordered_channels.append(channel)
-mPFC_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 < max_channel]
-vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 >= max_channel]
-
-data_folder = data_folders[-1]
-rhd_folder = data_folder + 'ephys/'
-rhd_files = natsorted(os.listdir(rhd_folder))
-amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']  # time: 02:28min for 25 files
-channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels]
-mPFC_indices = [channel_list.index(valid_channel) for valid_channel in mPFC_channels]
-vHIP_indices = [channel_list.index(valid_channel) for valid_channel in vHIP_channels]
-amp_channels = np.array(amp_channels)
-mPFC_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[mPFC_indices]]
-vHIP_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[vHIP_indices]]
+mPFC_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 < first_pad_vHIP]
+vHIP_channels = [channel for channel in ordered_channels if pta.index(channel) + 1 >= first_pad_vHIP]
+#get mPFC_impedance and vHIP_impedance from last session:
+data_folder = data_folders[-1] #folder of the last session
+rhd_folder = data_folder + 'ephys/' #folder with the ephys rhd files
+rhd_files = natsorted(os.listdir(rhd_folder)) #all rhd files from the last session
+amp_channels = read_data(rhd_folder + rhd_files[0])['amplifier_channels']  # all channels
+channel_list = [int(channel['native_channel_name'][2:]) for channel in amp_channels] #all channel numbers
+mPFC_indices = [channel_list.index(valid_channel) for valid_channel in mPFC_channels] #the indices of the valid channels of mPFC in this session
+vHIP_indices = [channel_list.index(valid_channel) for valid_channel in vHIP_channels]#the indices of the valid channels of vHIP in this session
+amp_channels = np.array(amp_channels)#todo why does this work
+mPFC_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[mPFC_indices]] #mPFC impedance of the valid channels in the right order
+vHIP_impedance = [channel['electrode_impedance_magnitude'] for channel in amp_channels[vHIP_indices]] #vHIP impedance of the valid channels in the right order
 if select_channels:
-    rhd_file = rhd_files[1]
-    rhd_data = np.array(read_data(rhd_folder + rhd_file)['amplifier_data'], dtype=np.int16)
-    mPFC_data = rhd_data[mPFC_indices]
-    vHIP_data = rhd_data[vHIP_indices]
-    sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
-    spike_filtered = sosfiltfilt(sos_spike, mPFC_data - np.median(mPFC_data, axis=0)[None, :], axis=1)
-    toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9]
+    rhd_file = rhd_files[-2]
+    rhd_data = np.array(read_data(rhd_folder + rhd_file)['amplifier_data'], dtype=np.int16) #raw ephys data of the second to last minute in the recording
+    mPFC_data = rhd_data[mPFC_indices] #ephys data in the right order, containing only valid channels
+    vHIP_data = rhd_data[vHIP_indices] #ephys data in the right order, containing only valid channels
+    sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate) #prepare the params for the filtering
+    spike_filtered = sosfiltfilt(sos_spike, mPFC_data - np.median(mPFC_data, axis=0)[None, :], axis=1) # remove median an filter to spike_band
+    toplot = spike_filtered[:, spike_filtered.shape[1] // 10 * 8:spike_filtered.shape[1] // 10 * 9] # take subset of the time to display
     fig = plt.figure(figsize=(20, 30))
     gs = fig.add_gridspec(toplot.shape[0], hspace=0)
     axs = gs.subplots(sharex=True, sharey=True)
-    for row, ax in tqdm(enumerate(axs)):
+    for row, ax in tqdm(enumerate(axs)): #plot the spike_band filtered ephys data on all valid channel in the right order
         label = 'channel: ' + str(mPFC_channels[row]) + ', ' + str(
-            mPFC_impedance[row] * 100 // max_impedance) + '% max impedance'
+            mPFC_impedance[row] * 100 // max_impedance) + '% max impedance' #label with the channel number and % of max impedance
         ax.plot(toplot[toplot.shape[0]-row-1], label=label, linewidth=1)
         ax.legend(loc='upper right')
     plt.ylim(-50, 50)
     fig.suptitle('mPFC channels', size=100)
     plt.show()
     plt.close(fig)
+
+    #do the same for the channels in vHIP:
     spike_filtered = sosfiltfilt(sos_spike, vHIP_data - np.median(vHIP_data, axis=0)[None, :], axis=1)
     spike_filtered = spike_filtered - np.median(spike_filtered, axis=0)[None, :]
 
@@ -130,18 +135,18 @@ if select_channels:
         elif discarded_channel in vHIP_channels:
             vHIP_channels.remove(discarded_channel)
     np.save(target_folder + 'discarded_channels', discarded_channels)
-mPFC_channels = list(np.array(mPFC_channels)[np.array(mPFC_impedance) < max_impedance])
+mPFC_channels = list(np.array(mPFC_channels)[np.array(mPFC_impedance) < max_impedance]) #remove channels above max impedance
 vHIP_channels = list(np.array(vHIP_channels)[np.array(vHIP_impedance) < max_impedance])
 # pads[x] denotes the pad corresponding to data['amplifier_data'][x]
 mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels]
 vHIP_pads = [pta.index(channel) + 1 for channel in vHIP_channels]
-np.save(target_folder + 'utils/vHIP_pads', vHIP_pads)
+np.save(target_folder + 'utils/vHIP_pads', vHIP_pads)#save the pads corresponding to the channels/data_rows
 np.save(target_folder + 'utils/mPFC_pads', mPFC_pads)
 # probe file 'graph'
-graph = []
+graph = []  #needs to be empty for legacy reasons
 
 # probe file 'geometry'
-geometry = {}
+geometry = {} #the geometry of the probe, mostly used for visualisation
 for i in range(len(mPFC_pads)):
     if mPFC_pads[i] < 33:
         geometry[i] = (0, (mPFC_pads[i] - 32) * 70)
@@ -155,7 +160,7 @@ mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
                  '2021-02-26_mBWfus012_EZM_ephys': 35}
 
-accomodation = 20 #time after mouse is introduced into the maze to cut off in seconds
+accomodation = 20 #time after mouse is introduced into the maze to cut off in seconds (only used if mouse_is_late)
 for index, experiment_name in tqdm(enumerate(experiment_names)):
     physio_trigger = physio_triggers[experiment_name]
     if experiment_name in mouse_is_late:
@@ -201,11 +206,11 @@ cap1 = ('total_nb_channels = ' + str(total_nb_channels)
         + '\ngeometry = ' + str(geometry))
 
 # create probe.prb file
-with open(target_folder + 'probe.prb', 'w') as f:
+with open(target_folder + 'utils/probe.prb', 'w') as f:
     f.write(cap1)
 with open(templates + 'probespecs.prb', 'r') as f:
     t = f.read()
-with open(target_folder + 'probe.prb', 'a') as f:
+with open(target_folder + 'utils/probe.prb', 'a') as f:
     f.write(t)
 
 # prepare parameters.params file
@@ -215,7 +220,6 @@ cap2 = ('[data]'
         + '\noutput_dir = ' + target_folder + 'dat_files_mod')
 
 # create parameters.params file
-
 with open(param_file, 'w') as f:
     f.write(cap2)
 with open(templates + 'parameters.params', 'r') as f:
@@ -224,3 +228,5 @@ with open(param_file, 'a') as f:
     f.write(t)
 
 print('Config for animal {} done!'.format(animal))
+if alert_when_done:
+    utils.alert()

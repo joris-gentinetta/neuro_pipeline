@@ -1,4 +1,5 @@
-animal = '222'  # one of the sets with one day
+######################################
+animal = '411'  # one of the sets with one day
 toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
 max_duration = 60  # seconds # if negative, crops from end
@@ -10,7 +11,8 @@ save = True
 do_archive = False
 single_figures = True
 multi_figure = True
-
+alert_when_done = True
+######################################
 import copy
 import pandas as pd
 import os
@@ -187,3 +189,5 @@ if do_archive:
     archive.to_pickle(target_folder + 'archive.pkl')
 
 print('analysis for animal {} done!'.format(animal))
+if alert_when_done:
+    utils.alert()

@@ -1,14 +1,15 @@
+######################################
 animals = ['11'] # set of animals, 2 char string, example animal 9: '09'
 treatment = 'medication' # one of ['none', 'saline', 'medication']
-score = 'ezm_closed_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score']
-threshold = 0                      # recommended: [0                 ,  0                    ,  0                ,  0               ]
+score = 'treatment_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score', 'treatment_score']
+threshold = 20                      # recommended: [0                 ,  0                    ,  0                ,  0            , 20   ]
 data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
                    'under_threshold_minus', 'over_threshold_minus']  # selection of ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
 # 'under_threshold_minus', 'over_threshold_minus']
 
 #significance plus/minus: plus['ezm_closed_score': firing rate higer in closed area,
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
-# 'of_middle_score': firing rate higher in the middle]
+# 'of_middle_score': firing rate higher in the middle, 'treatment_score': firing rate higher before treatment]
 
 toplot = ['phase']
 # selection of: ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
@@ -22,7 +23,8 @@ phase_modes = ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'thet
 delete_plot_folder = False
 show = True
 save = False
-
+alert_when_done = True
+######################################
 import copy
 import pandas as pd
 import os
@@ -31,6 +33,7 @@ import time
 import numpy as np
 import pickle5 as pkl
 import treatment_plots
+from utils import alert
 
 treatment_dict = {'none': '1', 'saline': '2', 'medication': '3'}
 _ , animals = (list(t) for t in zip(*sorted(zip([int(animal) for animal in animals], animals))))
@@ -70,17 +73,25 @@ plusminus = score[:-6]
 # n1 = archive.loc[:,('characteristics', score)].values < threshold
 # n2 = archive.index != -1
 
+if plusminus == 'treatment':
+    mean_before = archive.loc[:, ('characteristics', 'mean_before')].values
+    mean_after = archive.loc[:, ('characteristics', 'mean_after')].values
+    plus_minus_values = (mean_before-mean_after)*100/mean_before
+    score_values = np.abs(plus_minus_values)
+else:
+    score_values = archive.loc[:, ('characteristics', score)].values
+    plus_minus_values = archive.loc[:,('characteristics',plusminus)].values
 
-under_threshold_all = archive.loc[archive.loc[:,('characteristics', score)].values < threshold]
-under_threshold_plus = archive.loc[np.logical_and(archive.loc[:,('characteristics', score)].values < threshold, archive.loc[:,
-    ('characteristics', plusminus)] > 0)]
-under_threshold_minus = archive.loc[np.logical_and(archive.loc[:,('characteristics', score)].values < threshold, archive.loc[:,
-    ('characteristics', plusminus)] <= 0)]
-over_threshold_all = archive.loc[archive.loc[:,('characteristics', score)].values >= threshold ]
-over_threshold_plus = archive.loc[np.logical_and(archive.loc[:,('characteristics', score)].values >= threshold, archive.loc[:,
-    ('characteristics', plusminus)] > 0)]
-over_threshold_minus = archive.loc[np.logical_and(archive.loc[:,('characteristics', score)].values >= threshold, archive.loc[:,
-    ('characteristics', plusminus)] <= 0)]
+under_threshold_all = archive.loc[score_values < threshold]
+under_threshold_plus = archive.loc[
+    np.logical_and(score_values < threshold, plus_minus_values > 0)]
+under_threshold_minus = archive.loc[
+    np.logical_and(score_values < threshold, plus_minus_values <= 0)]
+over_threshold_all = archive.loc[score_values >= threshold]
+over_threshold_plus = archive.loc[
+    np.logical_and(score_values >= threshold, plus_minus_values > 0)]
+over_threshold_minus = archive.loc[
+    np.logical_and(score_values >= threshold, plus_minus_values <= 0)]
 
 for data_separation in data_separations:
     if data_separation == 'under_threshold_all':
@@ -131,3 +142,5 @@ for data_separation in data_separations:
 
 
 print('treatment_analysis done for animals: {}, treatment: {}, score: {}, threshold: {}'.format(animals, treatment, score, threshold))
+if alert_when_done:
+    alert()

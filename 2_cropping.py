@@ -1,4 +1,7 @@
-animal = '222'
+######################################
+animal = '211'
+alert_when_done = False
+######################################
 
 import numpy as np
 from load_intan_rhd_format.load_intan_rhd_format import read_data
@@ -11,7 +14,7 @@ import subprocess
 import shlex
 from natsort import natsorted
 import pickle5 as pkl
-
+from utils import alert
 from scipy.signal import hilbert
 from scipy.signal import butter, sosfiltfilt
 
@@ -119,11 +122,12 @@ print(converter.returncode)
 
 
 # start viewer
-viewer_command = 'circus-gui-python ' + circus_entrypoint
-with open(target_folder + 'utils/start_viewer.txt', 'w') as f:
+viewer_command = '@echo off \ncall conda activate circus \ncircus-gui-python ' + circus_entrypoint
+with open(target_folder + 'utils/start_viewer.bat', 'w') as f:
     f.write(viewer_command)
 args = shlex.split(viewer_command)
-
+if alert_when_done:
+    alert()
 viewer = subprocess.run(args, stdout=subprocess.PIPE,
                         encoding='ascii')
 
