@@ -87,5 +87,5 @@ def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_
               + phase_ranges
     tuples = list(zip(level_1, level_2))
     columns = pd.MultiIndex.from_tuples(tuples)
-    archive = pd.DataFrame(index=cluster_names, columns=columns)
+    archive = pd.DataFrame(index=cluster_names, columns=columns, dtype=np.float32)
     return archive

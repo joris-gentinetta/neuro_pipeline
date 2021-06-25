@@ -1,5 +1,5 @@
 ######################################
-animal = '211'
+animal = '111'
 alert_when_done = False
 ######################################
 
@@ -24,6 +24,7 @@ spike_band = [300, 3000]
 sampling_rate = 20000
 frame_rate = 50
 
+start_time = time.time()
 # folder preparation
 animal_folder = r'E:/anxiety_ephys/' + animal + '/'
 sub_folder = 'circus'
@@ -36,7 +37,6 @@ templates = r'E:/pipe/spykingcircus_sorter_2/templates/'
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat'
 if os.listdir(target_folder + 'dat_files_mod'):
     raise Exception('Croppig already done, to redo run config again first.')
-#os.mkdir(target_folder + 'movement_files')#todo remove
 
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -60,7 +60,7 @@ for index, experiment_name in enumerate(experiment_names):
     movement_trigger = int(float(data[point - 2:point + 3]) * frame_rate)
 
     if experiment_name in mouse_is_late:
-        off = (mouse_is_late[experiment_name] + accomodation) * sampling_rate
+        off = (mouse_is_late[experiment_name] + accomodation) * frame_rate
     else:
         off = 0
     movement_trigger += off
@@ -80,9 +80,9 @@ for index, experiment_name in enumerate(experiment_names):
         vHIP_concatenated = vHIP_concatenated[:, boolean_sampling_rate]
         mPFC_spike_range = mPFC_spike_range[:, boolean_sampling_rate]
         xy = xy[:, boolean_frame_rate]
-        np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range)
+        np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range.astype(np.int16))
 
-    np.save(target_folder + 'movement_files/' + experiment_name, xy)
+    np.save(target_folder + 'movement_files/' + experiment_name, xy.astype(np.float32))
 
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
@@ -90,9 +90,9 @@ for index, experiment_name in enumerate(experiment_names):
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase)
+    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase.astype(np.int16)) #todo determine dtype
     logbook[index] = data_for_spikesorting.shape[0]
-np.save(target_folder + 'utils/logbook', logbook)
+np.save(target_folder + 'utils/logbook', logbook.astype(np.uint32))
 
 
 
@@ -102,12 +102,6 @@ np.save(target_folder + 'utils/logbook', logbook)
 cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10'
 os.system(cluster_command)
 
-# args = shlex.split(cluster_command)
-# cluster = subprocess.run(args, stdout=subprocess.PIPE,
-#                          encoding='ascii')
-# print(cluster.stdout)
-#
-# print('clustering return code: ', cluster.returncode)
 
 
 converter_command = 'spyking-circus ' + circus_entrypoint + ' -m converting -c 10'
@@ -116,21 +110,21 @@ args = shlex.split(converter_command)
 converter = subprocess.run(args, stdout=subprocess.PIPE,
                            input='a\n', encoding='ascii')
 
-print(converter.returncode)
+print('Converter return_code: {}'.format(converter.returncode))
 # print(converter.stdout)
-
+end_time = time.time()
+print('Cropping for animal {} done! \nTime needed: {} minutes.'.format(animal, (end_time-start_time)/60))
+if alert_when_done:
+    alert()
 
 # start viewer
 viewer_command = '@echo off \ncall conda activate circus \ncircus-gui-python ' + circus_entrypoint
 with open(target_folder + 'utils/start_viewer.bat', 'w') as f:
     f.write(viewer_command)
+viewer_command = 'circus-gui-python ' + circus_entrypoint
 args = shlex.split(viewer_command)
-if alert_when_done:
-    alert()
+
 viewer = subprocess.run(args, stdout=subprocess.PIPE,
                         encoding='ascii')
 
-print(viewer.returncode)
-# print(viewer.stdout)
-
-print('Cropping for animal {} done!'.format(animal))
+print('Viewer return_code: {}'.format(viewer.returncode))

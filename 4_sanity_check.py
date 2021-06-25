@@ -1,7 +1,7 @@
 #%%
 
 ######################################
-animal = '211'
+animal = '111'
 alert_when_done = True
 ######################################
 
@@ -17,9 +17,11 @@ from time import sleep
 from shutil import rmtree
 from scipy.stats import pearsonr
 from scipy.ndimage.filters import gaussian_filter1d
+import time
 
 
 
+start_time = time.time()
 animal_folder = r'E:/anxiety_ephys/' + animal + '/'
 experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
@@ -54,7 +56,7 @@ for experiment_name in experiment_names:
     experiment_plots = plot_folder+ experiment_name
     os.mkdir(experiment_plots)
     spikes_20000 = np.load(target_folder + 'spikes_20000/' + experiment_name + '.npy')
-    mPFC_spike_range = np.load(target_folder + 'mPFC_spike_range/' + experiment_name + '.npy').astype(np.int16)#todo
+    mPFC_spike_range = np.load(target_folder + 'mPFC_spike_range/' + experiment_name + '.npy')
     number_of_units = spikes_20000.shape[0]
     number_of_channels = mPFC_spike_range.shape[0]
 
@@ -122,15 +124,15 @@ for unit in range(number_of_units):
     plt.close(fig)
 #%%
 sigma=3
-pearson_coefficients = pd.DataFrame(index= sorted_units[:][2], columns=natsorted(waveform_dict.keys()))
-p_values = pd.DataFrame(index= sorted_units[:][2], columns=natsorted(waveform_dict.keys()))
-
+pearson_coefficients = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
+p_values = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
+#%%
 fig, axs = plt.subplots(number_of_units, len(isi_dict.keys()), sharex=True)
 fig.set_figheight(25)
 fig.set_figwidth(25)
 for unit in range(number_of_units):
     unit_id = sorted_units[unit][2]
-    unit_index = sorted_units[unit][1]
+    unit_index = int(sorted_units[unit][1])
     channel = sorted_units[unit][0]
     sum = np.zeros(number_of_bins_isi)
     for index, key in enumerate(natsorted(isi_dict.keys())):
@@ -146,24 +148,24 @@ for unit in range(number_of_units):
 
     for index, key in enumerate(natsorted(waveform_dict.keys())):
         session_isi = isi_dict[key][unit_index, :]
-        pearson_coefficients.loc[unit_id, key], p_values.loc[unit_id, key] =\
-            pearsonr(gaussian_filter1d(mean, sigma=sigma), gaussian_filter1d(session_isi,sigma=sigma))
-pearson_coefficients.to_pickle(target_folder + 'pearson_coefficients_isi.pkl')
-p_values.to_pickle(target_folder + 'p_values_isi.pkl')
+        pearson_coefficients.loc[unit_id, key], p_values.loc[unit_id, key] \
+            = pearsonr(gaussian_filter1d(mean, sigma=sigma), gaussian_filter1d(session_isi,sigma=sigma))
+pearson_coefficients.to_pickle(target_folder + 'utils/pearson_coefficients_isi.pkl')
+p_values.to_pickle(target_folder + 'utils/p_values_isi.pkl')
 
-plt.savefig(sanity_plots + 'isi_unit_' + str(unit_id))
+plt.savefig(sanity_plots + 'isi_all_units')
 plt.show()
 plt.close(fig)
 
 #%%
-pearson_coefficients = pd.DataFrame(index= sorted_units[:][2], columns=natsorted(waveform_dict.keys()))
-p_values = pd.DataFrame(index= sorted_units[:][2], columns=natsorted(waveform_dict.keys()))
-fig, axs = plt.subplots(1, number_of_units, sharex=True, sharey=True)
+pearson_coefficients = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
+p_values = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
+fig, axs = plt.subplots(1, number_of_units-1, sharex=True, sharey=True)
 fig.set_figheight(25)
 fig.set_figwidth(25)
-for unit in range(number_of_units):
+for unit in range(1,number_of_units):
     unit_id = sorted_units[unit][2]
-    unit_index = sorted_units[unit][1]
+    unit_index = int(sorted_units[unit][1])
     channel = sorted_units[unit][0]
     sum = np.zeros(60)
     for index, key in enumerate(natsorted(waveform_dict.keys())):
@@ -172,25 +174,27 @@ for unit in range(number_of_units):
         else:
             sum = 1
         toplot = waveform_dict[key][unit_index,:,:] + np.linspace(0, 100*number_of_channels, number_of_channels)[:, None]
-        axs[unit].plot((toplot + index * 15).T, 'b', linewidth=0.5)
+        axs[unit-1].plot((toplot + index * 15).T, 'b', linewidth=0.5)
     mean = sum / len(waveform_dict.keys())
-    axs[unit].set_yticks(np.linspace(0, 100*number_of_channels, number_of_channels))
-    axs[unit].set_yticklabels(mPFC_pads)
-    axs[unit].set_xticks(np.linspace(0,60, 2))
-    axs[unit].set_xticklabels([-1,2])
-    axs[unit].set_title(unit_id, loc='right')
+    axs[unit-1].set_yticks(np.linspace(0, 100*number_of_channels, number_of_channels))
+    axs[unit-1].set_yticklabels(mPFC_pads)
+    axs[unit-1].set_xticks(np.linspace(0,60, 2))
+    axs[unit-1].set_xticklabels([-1,2])
+    axs[unit-1].set_title(unit_id, loc='right')
     archive.loc[unit_id, idx['mean_waveform',:]] = mean
     for index, key in enumerate(natsorted(waveform_dict.keys())):
-        main_waveform = waveform_dict[key][unit_index, int[channel], :]
+        main_waveform = waveform_dict[key][unit_index, int(channel), :]
         pearson_coefficients.loc[unit_id, key], p_values.loc[unit_id, key] = pearsonr(mean, main_waveform)
-pearson_coefficients.to_pickle(target_folder + 'pearson_coefficients_waveform.pkl')
-p_values.to_pickle(target_folder + 'p_values_waveform.pkl')
+pearson_coefficients.to_pickle(target_folder + 'utils/pearson_coefficients_waveform.pkl')
+p_values.to_pickle(target_folder + 'utils/p_values_waveform.pkl')
 
 plt.savefig(sanity_plots + 'waveform_all_units')
 plt.show()
 plt.close(fig)
 archive.to_pickle(target_folder + 'archive.pkl')
-
+end_time = time.time()
+print('Sanity_check for animal {} done! \nTime needed: {} minutes'.format(animal, (end_time-start_time)/60))
 if alert_when_done:
     alert()
+
 

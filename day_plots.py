@@ -49,7 +49,10 @@ def get_ezm_ROI_masks(n, transition_size):
 def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names, single_figures, multi_figure,
                sigma=10, minp=0, maxp=95, n=150, show=False, save=True, filter=False):
     mode = 'trace_filter_' + str(filter)
-    file_name = plot_folder + experiment_name + '_' + mode + '_sigma' + str(sigma) + '_n' + str(n) + '_minp' + str(
+    file_name = plot_folder + experiment_name + '_' + mode
+    if filter:
+        file_name += '_sigma' + str(sigma)
+    file_name +=  '_n' + str(n) + '_minp' + str(
         minp) + '_maxp' + str(maxp) + '_'
     content = np.copy(aligned)
     if filter:
@@ -362,7 +365,7 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
     transition_indices = [transition_index for transition_index in event_indices if
                           transition_index + n <= content.shape[1] and transition_index - n >= 0]
     if not transition_indices:  # check if there are any valid events
-        return
+        return archive
     binned = np.zeros((number_of_units, number_of_bins, len(transition_indices)),
                       dtype=np.float32)  # unit, bar, transition_index
     for tindex, transition_index in enumerate(transition_indices):
@@ -642,13 +645,14 @@ def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, 
 
 # computes the EZM score
 def get_ezm_score(rois):
-    mean = np.mean(rois, axis=1)
-    mean = np.where(mean != 0, mean, 1)
-    rois = (rois - mean[:, None]) * 100 / mean[:, None]
+    # mean = np.mean(rois, axis=1)
+    # mean = np.where(mean != 0, mean, 1)
+    # rois = (rois - mean[:, None]) * 100 / mean[:, None]
     a1 = 0.25 * (np.abs(rois[:, 5] - rois[:, 4]) + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(
-        rois[:, 7] - rois[:, 7]) + np.abs(rois[:, 7] - rois[:, 6]))
+        rois[:, 7] - rois[:, 4]) + np.abs(rois[:, 7] - rois[:, 6]))
     b1 = 0.5 * (np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 4] - rois[:, 6]))
     open_close = (a1 - b1) / (a1 + b1)
+    closed = (rois[:, 5] + rois[:, 7]) / 2 - (rois[:, 4] + rois[:, 6]) / 2
 
     a2 = 1 / 16 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 7])
                    + np.abs(rois[:, 0] - rois[:, 6]) + np.abs(rois[:, 0] - rois[:, 5])
@@ -665,16 +669,15 @@ def get_ezm_score(rois):
                    + np.abs(rois[:, 4] - rois[:, 5]) + np.abs(rois[:, 5] - rois[:, 7])
                    + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(rois[:, 6] - rois[:, 7]))
     crossing = (a2 - b2) / (a2 + b2)
-    closed = (rois[:, 5] + rois[:, 7]) / 2
-    transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
+    transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (rois[:, 5] + rois[:, 7] + rois[:, 4] + rois[:, 6]) / 4
     return open_close, crossing, closed, transition
 
 
 # computes the OF score
 def get_of_score(rois):
-    mean = np.mean(rois, axis=1)
-    mean = np.where(mean != 0, mean, 1)
-    rois = (rois - mean[:, None]) * 100 / mean[:, None]
+    # mean = np.mean(rois, axis=1)
+    # mean = np.where(mean != 0, mean, 1)
+    # rois = (rois - mean[:, None]) * 100 / mean[:, None]
 
     a1 = 1 / 20 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 5])
                    + np.abs(rois[:, 0] - rois[:, 6]) + np.abs(rois[:, 0] - rois[:, 7])
@@ -697,7 +700,7 @@ def get_of_score(rois):
                    + np.abs(rois[:, 6] - rois[:, 8]))
 
     of_corners_score = (a1 - b1) / (a1 + b1)
-    of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4
+    of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:, 7] + rois[:, 8]) / 5
     a2 = 1 / 8 * (np.abs(rois[:, 8] - rois[:, 4]) + np.abs(rois[:, 8] - rois[:, 5])
                   + np.abs(rois[:, 8] - rois[:, 6]) + np.abs(rois[:, 8] - rois[:, 7])
                   + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 8])
@@ -719,7 +722,7 @@ def get_of_score(rois):
                    + np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 6] - rois[:, 7]))
 
     of_middle_score = (a2 - b2) / (a2 + b2)
-    of_middle = rois[:, 8]
+    of_middle = rois[:, 8] - (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3] + rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:, 7]) / 8
     return of_corners_score, of_middle_score, of_corners, of_middle
 
 

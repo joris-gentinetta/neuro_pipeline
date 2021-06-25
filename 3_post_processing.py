@@ -1,5 +1,5 @@
 ######################################
-animal = '211'
+animal = '111'
 alert_when_done = True
 ######################################
 
@@ -11,9 +11,12 @@ from tqdm import tqdm
 import os
 from natsort import natsorted
 import utils
+import time
 
 
-
+start_time = time.time()
+frame_rate = 50
+sampling_rate = 20000
 animal_folder = r'E:/anxiety_ephys/' + animal + '/'
 experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
@@ -28,7 +31,7 @@ sclusters = 'spike_clusters.npy'
 infofile = 'cluster_info.tsv'
 
 
-number_of_bins_transitions = 20  # in 10 second window around transitions
+number_of_bins_transitions = 20  # in 5 second window around transitions
 number_of_bins_phase = 8  # phaseplot
 number_of_bins_isi = 200
 
@@ -50,23 +53,23 @@ logbook_3 = np.zeros(len(experiment_names)+1, dtype=np.int64)
 for i in range(logbook_3.size):
     logbook_3[i] = np.sum(logbook_2[0:i+1])
 original_logbook_3 = logbook_3
-logbook_3 = logbook_3*50//20000
+logbook_3 = logbook_3*frame_rate//sampling_rate
 
 
 
 original_spiketimes = np.load(folder + stimes)
-spiketimes = original_spiketimes*50//20000  #sampled at 50Hz
+spiketimes = original_spiketimes*frame_rate//sampling_rate  #sampled at 50Hz
 clusters = np.load(folder + sclusters)
 data = np.zeros((int(indexer.max()+1), logbook_3[-1]), dtype=np.uint8)
 original_data = np.zeros((int(indexer.max()+1), original_logbook_3[-1]), dtype=bool)
 
 
 
-for index, time in enumerate(spiketimes):
-    data[indexer[clusters[index]],time] += 1
+for index, timepoint in enumerate(spiketimes):
+    data[indexer[clusters[index]],timepoint] += 1
 
-for index, time in enumerate(original_spiketimes):
-    original_data[indexer[clusters[index]], time] += 1
+for index, timepoint in enumerate(original_spiketimes):
+    original_data[indexer[clusters[index]], timepoint] += 1
 
 
 
@@ -74,7 +77,7 @@ cluster_names = np.zeros(data.shape[0], dtype = np.uint8)
 for i in range(1,cluster_names.size):
     cluster_names[i] =  np.where(indexer == i)[0]
 cluster_names[0] = 255
-np.save(target_folder + 'utils/cluster_names', cluster_names)
+np.save(target_folder + 'utils/cluster_names', cluster_names.astype(np.uint16))
 
 
 # lw =0.4
@@ -89,8 +92,8 @@ np.save(target_folder + 'utils/cluster_names', cluster_names)
 
 
 for i in range(logbook_3.size-1):
-    np.save(target_folder + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]])
-    np.save(target_folder + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]])
+    np.save(target_folder + 'spikes_50/' + experiment_names[i], data[:,logbook_3[i]:logbook_3[i+1]].astype(np.uint8))
+    np.save(target_folder + 'spikes_20000/' + experiment_names[i], original_data[:,original_logbook_3[i]:original_logbook_3[i+1]].astype(bool))
 
 vHIP_pads = np.load(target_folder + 'utils/vHIP_pads.npy')
 archive = utils.create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase, number_of_bins_isi)
@@ -100,9 +103,9 @@ archive.loc[:, ('characteristics', 'overall_firing_rate')] = info.loc[:, 'fr']
 archive.loc[:, ('characteristics', 'purity')] = info.loc[:, 'purity']
 archive.loc[:, ('characteristics', 'data_row')] = info.loc[:, 'ch']
 
-
-
 archive.to_pickle(target_folder + 'archive.pkl')
-print('post processing for animal {} done!'.format(animal))
+
+end_time = time.time()
+print('Post_processing for animal {} done! \nTime needed: {} minutes'.format(animal, (end_time-start_time)/60))
 if alert_when_done:
     utils.alert()

@@ -1,16 +1,17 @@
 ######################################
-animal = '411'  # one of the sets with one day
-toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']  # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+animal = '309'  # one of the sets with one day
+toplot = []# ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+# subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
-max_duration = 60  # seconds # if negative, crops from end
+max_duration = 1200  # seconds # if negative, crops from end, else from start
 
-delete_plot_folder = True
+delete_plot_folder = False
 show = False
-save = True
-do_archive = False
-single_figures = True
-multi_figure = True
-alert_when_done = True
+save = False
+do_archive = True
+single_figures = False
+multi_figure = False
+alert_when_done = False
 ######################################
 import copy
 import pandas as pd
@@ -31,11 +32,13 @@ transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open
                    'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime',
                    'withdraw_exittime',
                    'nosedip_starttime',
-                   'nosedip_stoptime']  # subselection of ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
+                   'nosedip_stoptime']
+# subselection of ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
 # 'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime', 'prolonged_open_closed_exittime',
 # 'prolonged_closed_open_entrytime', 'prolonged_closed_open_exittime', 'withdraw_entrytime', 'withdraw_exittime',
 # 'nosedip_starttime', 'nosedip_stoptime']
 
+start_time = time.time()
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
@@ -66,9 +69,9 @@ for experiment_name in experiment_names:
         environment = 'EZM'
     elif experiment_name[-7] == 'F':
         environment = 'OFT'
-    elif experiment_name[21:23] == 'be':
+    elif experiment_name[-18:-16] == 'be':
         environment = 'before'
-    elif experiment_name[21:23] == 'af':
+    elif experiment_name[-17:-15] == 'af':
         environment = 'after'
     else:
         continue
@@ -174,7 +177,7 @@ for experiment_name in experiment_names:
                 archive.loc[:, 'ROI_OF'].values)
 if do_archive:
     archive.to_pickle(target_folder + 'archive.pkl')
-
-print('analysis for animal {} done!'.format(animal))
+end_time = time.time()
+print('Day_analysis for animal {} done! \nTime needed: {} minutes'.format(animal, (end_time-start_time)/60))
 if alert_when_done:
     utils.alert()
