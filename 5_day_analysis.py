@@ -1,5 +1,5 @@
 ######################################
-animal = '309'  # one of the sets with one day
+animal = '211'  # one of the sets with one day
 toplot = []# ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']

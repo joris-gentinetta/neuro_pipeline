@@ -1,9 +1,9 @@
 ######################################
-animals = ['09', '11', '12'] # set of animals, 2 char string, example animal 9: '09'
+animals = ['11', '12'] # set of animals, 2 char string, example animal 9: '09'
 treatment = 'none' # one of ['none', 'saline', 'medication']
-score = 'ezm_transition_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score', 'treatment_score',
+score = 'ezm_closed_score'  # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score', 'treatment_score',
 #'ezm_closed_score_2', 'ezm_transition_score_2', 'of_corners_score_2', 'of_middle_score_2' ]
-threshold = 0.2                 # recommended: [0.2                 ,  0.2                    ,  0.2                ,  0.2            , 20   ]
+threshold = 0.4                 # recommended: [0.2                 ,  0.2                    ,  0.2                ,  0.2            , 20   ]
 data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
                    'under_threshold_minus', 'over_threshold_minus', 'all', 'all_minus', 'all_plus']  # selection of ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
 # 'under_threshold_minus', 'over_threshold_minus', 'all', 'all_minus', 'all_plus']
@@ -24,7 +24,7 @@ transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_ope
 # 'nosedip_starttime', 'nosedip_stoptime']
 phase_modes = ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
 # selection of: ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'theta_phase_after']
-delete_plot_folder = True
+delete_plot_folder = False
 show = False
 save = True
 alert_when_done = False
