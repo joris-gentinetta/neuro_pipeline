@@ -1,16 +1,17 @@
 ######################################
-animal = '211'  # one of the sets with one day
-toplot = []# ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+animal = '112'  # one of the sets with one day
+toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
+
 max_duration = 1200  # seconds # if negative, crops from end, else from start
 
 delete_plot_folder = False
 show = False
-save = False
+save = True
 do_archive = True
-single_figures = False
-multi_figure = False
+single_figures = True
+multi_figure = True
 alert_when_done = False
 ######################################
 import copy

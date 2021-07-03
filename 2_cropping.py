@@ -1,14 +1,10 @@
 ######################################
-animal = '111'
-alert_when_done = False
+animal = '444'
+alert_when_done = True
 ######################################
 
 import numpy as np
-from load_intan_rhd_format.load_intan_rhd_format import read_data
 import os
-import shutil
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import time
 import subprocess
 import shlex
@@ -22,7 +18,7 @@ butter_order = 3
 theta_band = [4, 12]
 spike_band = [300, 3000]
 sampling_rate = 20000
-frame_rate = 50
+frame_rate = 50 #frame rate of the video
 
 start_time = time.time()
 # folder preparation
@@ -32,33 +28,30 @@ target_folder = animal_folder + sub_folder + '/'
 experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
     experiment_names.remove('circus')
-data_folders = [animal_folder + experiment_name + '/' for experiment_name in experiment_names]
-templates = r'E:/pipe/spykingcircus_sorter_2/templates/'
-circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat'
-if os.listdir(target_folder + 'dat_files_mod'):
-    raise Exception('Croppig already done, to redo run config again first.')
-
-mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
+circus_entrypoint = target_folder + 'dat_files/' + experiment_names[0] + '_0.dat' #file to run spyking circus on (first of the data files)
+##todo undo commenting:
+# if os.listdir(target_folder + 'dat_files_mod'): #can only crop once
+#     raise Exception('Croppig already done, to redo run config.py again first.')
+mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70, #seconds delay from trigger signal to mouse in the maze #same as in 1_config.py
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
                  '2021-02-26_mBWfus012_EZM_ephys': 35}
-accomodation = 20
+accomodation = 20 #time to let the late mice settle #same as in 1_config.py
 
-logbook = np.zeros(len(experiment_names))
+logbook = np.zeros(len(experiment_names)) #will contain the length of the recordings for all sessions
+
 for index, experiment_name in enumerate(experiment_names):
-
     eventfile = animal_folder + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
-    #get events/movement
+    ##get events/movement
     with open(eventfile, 'rb') as f:
         events = pkl.load(f)
     movement = events['movement']
-    xy = np.array([movement['calib_traj_x'], movement['calib_traj_y']], dtype=np.float32)
-
+    xy = np.array([movement['calib_traj_x'], movement['calib_traj_y']], dtype=np.float32) #first row: x coord, second row: y coord
     movement_trigger_file = animal_folder + '/' + experiment_name + '/log.txt'
     with open(movement_trigger_file, 'r') as file:
         data = file.read().replace('\n', ' ')
     point = data.index('.')
-    movement_trigger = int(float(data[point - 2:point + 3]) * frame_rate)
-
+    movement_trigger = int(float(data[point - 2:point + 3]) * frame_rate) #get the 50Hz movement trigger
+    #introduce offset
     if experiment_name in mouse_is_late:
         off = (mouse_is_late[experiment_name] + accomodation) * frame_rate
     else:
@@ -83,10 +76,14 @@ for index, experiment_name in enumerate(experiment_names):
         np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range.astype(np.int16))
 
     np.save(target_folder + 'movement_files/' + experiment_name, xy.astype(np.float32))
-
+#start todo revert
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
-    hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
+    #theta_filtered = vHIP_concatenated
+    #stop todo
+#start todo revert
+    # hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
+    hilbert_phase = theta_filtered
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
     data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
@@ -96,8 +93,8 @@ np.save(target_folder + 'utils/logbook', logbook.astype(np.uint32))
 
 
 
-# start clustering process #15min
-
+# start clustering process
+before_clustering_time = time.time()
 
 cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10'
 os.system(cluster_command)
@@ -113,9 +110,10 @@ converter = subprocess.run(args, stdout=subprocess.PIPE,
 print('Converter return_code: {}'.format(converter.returncode))
 # print(converter.stdout)
 end_time = time.time()
-print('Cropping for animal {} done! \nTime needed: {} minutes.'.format(animal, (end_time-start_time)/60))
+print('Cropping for animal {} done! \nTime needed: {} minutes. Time for SpykingCircus: {}'.format(animal, (end_time-start_time)/60, (end_time-before_clustering_time)/60))
 if alert_when_done:
     alert()
+
 
 # start viewer
 viewer_command = '@echo off \ncall conda activate circus \ncircus-gui-python ' + circus_entrypoint

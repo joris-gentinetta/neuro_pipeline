@@ -1,7 +1,7 @@
 #%%
 
 ######################################
-animal = '111'
+animal = '112'
 alert_when_done = True
 ######################################
 
@@ -127,7 +127,7 @@ sigma=3
 pearson_coefficients = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
 p_values = pd.DataFrame(index= np.array(sorted_units)[:,2], columns=natsorted(waveform_dict.keys()), dtype=np.float32)
 #%%
-fig, axs = plt.subplots(number_of_units, len(isi_dict.keys()), sharex=True)
+fig, axs = plt.subplots(number_of_units, len(isi_dict.keys()), sharex=True, sharey='row')
 fig.set_figheight(25)
 fig.set_figwidth(25)
 for unit in range(number_of_units):
