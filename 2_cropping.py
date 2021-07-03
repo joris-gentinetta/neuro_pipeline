@@ -51,24 +51,24 @@ for index, experiment_name in enumerate(experiment_names):
         data = file.read().replace('\n', ' ')
     point = data.index('.')
     movement_trigger = int(float(data[point - 2:point + 3]) * frame_rate) #get the 50Hz movement trigger
-    #introduce offset
+    #introduce offset for the movement #is done in 1_config.py for ephys
     if experiment_name in mouse_is_late:
         off = (mouse_is_late[experiment_name] + accomodation) * frame_rate
     else:
         off = 0
     movement_trigger += off
-    xy = xy[:,movement_trigger:]
+    xy = xy[:,movement_trigger:] #crop from movement trigger
     mPFC_concatenated = np.load(target_folder + 'mPFC_raw/' + experiment_name + '.npy')
     vHIP_concatenated = np.load(target_folder + 'vHIP_raw/' + experiment_name + '.npy')
+    ##cut out the time segments specified in the cutter file
     if os.path.exists(target_folder + 'cutter/' + experiment_name + '.npy'):
         mPFC_spike_range = np.load(target_folder + 'mPFC_spike_range/' + experiment_name)
-        cutter = np.load(target_folder + 'cutter/' + experiment_name + '.npy')
-        # first row start time of cuts, second row stop time, dtype uint32
+        cutter = np.load(target_folder + 'cutter/' + experiment_name + '.npy') # first row start time of cuts, second row stop time, dtype uint32
         boolean_sampling_rate = np.ones(mPFC_concatenated.shape[1], dtype=np.bool)
         boolean_frame_rate = np.ones(xy.shape[1], dtype=np.bool)
         for cut in range(cutter.shape[1]):
-            boolean_sampling_rate[cutter[0, cut]*sampling_rate//frame_rate: cutter[1, cut]*sampling_rate//frame_rate] = 0
-            boolean_frame_rate[cutter[0, cut]: cutter[1, cut]] = 0
+            boolean_sampling_rate[cutter[0, cut]*sampling_rate//frame_rate: cutter[1, cut]*sampling_rate//frame_rate] = 0 #mask the values to cut out 20000Hz
+            boolean_frame_rate[cutter[0, cut]: cutter[1, cut]] = 0 #mask the values to cut out 20000Hz
         mPFC_concatenated = mPFC_concatenated[:, boolean_sampling_rate]
         vHIP_concatenated = vHIP_concatenated[:, boolean_sampling_rate]
         mPFC_spike_range = mPFC_spike_range[:, boolean_sampling_rate]

@@ -131,7 +131,7 @@ if select_channels:
     fig.suptitle('vHIP channels', size=100)
     plt.show()
     plt.close(fig)
-    discarded_channels = np.array(input('discarded channels seperated by space: ').split(), dtype=np.int8)
+    discarded_channels = np.array(input('discarded channels seperated by space: ').split(), dtype=np.int8) #let the user input the names of the channels to discard
     for discarded_channel in discarded_channels:
         if discarded_channel in mPFC_channels:
             mPFC_channels.remove(discarded_channel)
