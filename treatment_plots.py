@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.ndimage.filters import gaussian_filter1d
-import math
 from matplotlib import cm
 import matplotlib as mpl
 import copy
@@ -10,11 +8,11 @@ import pandas as pd
 make_path_visible = 0.0001
 idx = pd.IndexSlice
 
-
-# controlled and commented
+#plot the mean firing rate per roi in the circle representation:
 def plot_circle(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'circle'
     file_data_separation = plot_folder + mode + '_' + data_separation
+    ##assign the the pie segments to the roi's:
     colorcoding = np.empty(20)
     mean = np.mean(ROI, axis=0)
     colorcoding[2] = mean[0]
@@ -42,8 +40,6 @@ def plot_circle(plot_folder, ROI, data_separation, show=False, save=True):
     plt.close(fig)
     return
 
-
-# corrected and commented
 # plots grid with mean values of ROI(OF) of selected unit
 def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'grid'
@@ -53,6 +49,8 @@ def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
     mean = np.mean(ROI, axis=0)
     cmap = copy.copy(mpl.cm.get_cmap("Blues"))
     cmap.set_bad(color='grey')
+
+    ##assign the grid tiles to the rois
     indices = [6, 8, 8, 8, 4]
     for d in range(n):
         grid[1:n - 1, d] = mean[indices[d]]
@@ -74,8 +72,6 @@ def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
     plt.close(fig)
     return
 
-
-# corrected and commented
 # barplot with mean of z scores of selected units for timebins around transition, error bars: SEM
 def plot_transitions(plot_folder, transition_window, data_separation, mode, show=False, save=True):
     file_data_separation = plot_folder + mode + '_' + data_separation
@@ -102,7 +98,6 @@ def plot_transitions(plot_folder, transition_window, data_separation, mode, show
     return
 
 
-# corrected and commented
 # plots mean of selected units regarding the percent difference of ROI(EZM) mean from overall mean of unit
 def plot_arms(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'arms'
@@ -128,7 +123,6 @@ def plot_arms(plot_folder, ROI, data_separation, show=False, save=True):
     return
 
 
-# corrected and commented
 # plots mean of selected units regarding the percent difference of ROI(OF) mean from overall mean of unit
 def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'corners'
@@ -154,8 +148,7 @@ def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
     return
 
 
-# controlled and commented
-# plots barplot of the mean phase of all included units error bars are SEM
+# plots barplot of the mean phaseplots of all included units error bars are SEM
 def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True): #todo binned is already mean??
     binned = binned
     file_data_separation = plot_folder + mode + '_' + data_separation
@@ -182,7 +175,7 @@ def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True
     plt.close(fig)
     return
 
-
+# plots barplot of the phase of all included units on all vHIP pads error bars are SEM
 def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mode, show, save):
     mode = mode + '_all_pads'
     file_data_separation = plot_folder + mode + '_' + data_separation

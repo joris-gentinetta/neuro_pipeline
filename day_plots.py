@@ -364,18 +364,18 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
     content = np.copy(aligned)
     number_of_units = content.shape[0] - 2
-    #downsample the
+    ##downsample aligned to binsize 2*n//number_of_bins:
     downsampled = np.empty((number_of_units, content.shape[1] // (2 * n) * number_of_bins))
     for step in range(downsampled.shape[1]):
         downsampled[:, step] = np.mean(
             aligned[2:, step * (2 * n) // number_of_bins:(step + 1) * (2 * n) // number_of_bins], axis=1)
-
+    ##get the valid transition indices:
     transition_indices = [transition_index for transition_index in event_indices if
                           transition_index + n <= content.shape[1] and transition_index - n >= 0]
     if not transition_indices:  # check if there are any valid events
         return archive
     binned = np.zeros((number_of_units, number_of_bins, len(transition_indices)),
-                      dtype=np.float32)  # unit, bar, transition_index
+                      dtype=np.float32)  # 1.dim: unit, 2.dim: bin, 3.dim: transition_index
     for tindex, transition_index in enumerate(transition_indices):
         for bar in range(number_of_bins):
             # take mean of all firingrates within bins(bars)
@@ -384,8 +384,8 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                                              axis=1)
     mean_of_population = np.mean(binned, axis=2)  # mean of all transitons
     mean_of_all = np.mean(downsampled, axis=1)[:, None]  # mean of recording
-    std_of_population = np.std(binned, axis=2)
-    std_of_all = np.std(downsampled, axis=1)[:, None]
+    std_of_population = np.std(binned, axis=2) #std of all transitions
+    std_of_all = np.std(downsampled, axis=1)[:, None] #std of recording
     n_of_samples = binned.shape[2]
     z_scores = (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all  # compute z score
     sem = std_of_population / np.sqrt(n_of_samples)  # compute SEM (standard error of the mean)
@@ -393,6 +393,7 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
     if do_archive:
         archive.loc[:, idx[mode, :]] = z_scores  # save z scores to archive
     if show or save:
+
         if single_figures:
             for unit in range(number_of_units):
                 fig = plt.figure(figsize=(25, 5))
@@ -409,10 +410,10 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                 if show:
                     plt.show()
                 plt.close(fig)
+
         if multi_figure:
             #  fig, axs = plt.subplots(number_of_units , sharex=True)
             fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
-
             fig.set_figheight(15)
             fig.set_figwidth(15)
             for unit in range(number_of_units):
@@ -426,7 +427,6 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                 axs[unit // 4, unit % 4].set_xticks(np.linspace(0, number_of_bins + 1, 5))
                 axs[unit // 4, unit % 4].set_xticklabels(np.linspace(-number_of_bins // 2, number_of_bins // 2,
                                                                      5) * n / number_of_bins / 50)
-
             axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
             for ax_to_delete in axes_to_delete:
                 fig.delaxes(ax_to_delete)
@@ -455,7 +455,6 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
     return archive
 
 
-# controlled and well commented
 # used for EZM
 # plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
 # plots the mean of all single unit plots
@@ -486,7 +485,7 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
 
         for quadrant in range(8):
             valid_values_in_quadrant = grid[:, :, unit][np.logical_and(masks[quadrant] == 1, grid[:, :,
-                                                                                             unit] != 0)]  # 1d array of all values in quadrant and visited
+            ## to visulalize the masks:                                                                                unit] != 0)]  # 1d array of all values in quadrant and visited
             # fig=plt.figure()
             # plt.imshow(grid[:,:,unit].T)
             # plt.imshow(masks[quadrant].T, alpha=0.5)
@@ -525,13 +524,11 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
             # 'bottom right', 'top (open)', 'bottom (open)', 'left (closed)', 'right (closed)']
 
             axs[unit // 4, unit % 4].bar(np.arange(8), toplot)
-
             axs[unit // 4, unit % 4].set_xticks(np.arange(8))
             axs[unit // 4, unit % 4].set_xticklabels([0, 1, 2, 3, 4, 6, 5, 7])
-
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
-        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:] #todo
         # for ax_to_delete in axes_to_delete:
         #     fig.delaxes(ax_to_delete)
         if save:
@@ -559,7 +556,6 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
     return archive
 
 
-# controlled and commented
 # used for EZM
 # plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
 # plots the mean of all single unit plots
@@ -622,10 +618,9 @@ def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, 
             # 3: 'bottom right', 4: 'right', 5: 'top', 6: 'left', 7: 'bottom', 8: 'middle'}
             axs[unit // 4, unit % 4].set_xticks(np.arange(9))
             axs[unit // 4, unit % 4].set_xticklabels(np.arange(9))
-
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
-        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:] #todo
         # for ax_to_delete in axes_to_delete:
         #     fig.delaxes(ax_to_delete)
         if save:
@@ -653,9 +648,6 @@ def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, 
 
 # computes the EZM score
 def get_ezm_score(rois):
-    # mean = np.mean(rois, axis=1)
-    # mean = np.where(mean != 0, mean, 1)
-    # rois = (rois - mean[:, None]) * 100 / mean[:, None]
     a1 = 0.25 * (np.abs(rois[:, 5] - rois[:, 4]) + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(
         rois[:, 7] - rois[:, 4]) + np.abs(rois[:, 7] - rois[:, 6]))
     b1 = 0.5 * (np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 4] - rois[:, 6]))
@@ -683,10 +675,6 @@ def get_ezm_score(rois):
 
 # computes the OF score
 def get_of_score(rois):
-    # mean = np.mean(rois, axis=1)
-    # mean = np.where(mean != 0, mean, 1)
-    # rois = (rois - mean[:, None]) * 100 / mean[:, None]
-
     a1 = 1 / 20 * (np.abs(rois[:, 0] - rois[:, 4]) + np.abs(rois[:, 0] - rois[:, 5])
                    + np.abs(rois[:, 0] - rois[:, 6]) + np.abs(rois[:, 0] - rois[:, 7])
                    + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 4])
@@ -752,14 +740,10 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
         mask = np.tile(np.invert(original_aligned[i]), (phase.shape[0], 1))  # mask phase values where no spike ocurred
         masked = np.ma.masked_array(phase, mask=mask) #todo
         binned = np.zeros((masked.shape[0], number_of_bins))
-        #         for angle in range(-180 , 180):
-        #             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)
         for bin in range(number_of_bins):
             binned[:, bin] = np.sum(masked == bin, axis=1)  # slow part
-        # mean = np.mean(binned, axis=1)
         unit_mean = np.mean(binned, axis=1)
-        normalized = (binned - unit_mean[:, None]) / unit_mean[:, None]  # mean = np.where(mean != 0, mean, 1)
-        # phase_distribution -= mean[:, None]
+        normalized = (binned - unit_mean[:, None]) / unit_mean[:, None]
         if do_archive:
             archive.loc[unit, idx[unit_keys, :]] = np.reshape(binned, -1).astype(np.uint32)
         if save or show:
@@ -769,7 +753,6 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                     plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
                     plt.xticks(np.arange(number_of_bins + 1),
                                np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
-
                     if save:
                         plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
                     if show:
