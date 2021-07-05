@@ -1,6 +1,8 @@
-import trajectory_process as tp
-import pickle5 as pkl
 import os
+
+import pickle5 as pkl
+
+import trajectory_process as tp
 
 data_folder = 'E:/anxiety_ephys/'
 animals = os.listdir(data_folder)

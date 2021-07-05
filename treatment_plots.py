@@ -1,14 +1,16 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import matplotlib as mpl
 import copy
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib import cm
 
 make_path_visible = 0.0001
 idx = pd.IndexSlice
 
-#plot the mean firing rate per roi in the circle representation:
+
+# plot the mean firing rate per roi in the circle representation:
 def plot_circle(plot_folder, ROI, data_separation, show=False, save=True):
     mode = 'circle'
     file_data_separation = plot_folder + mode + '_' + data_separation
@@ -39,6 +41,7 @@ def plot_circle(plot_folder, ROI, data_separation, show=False, save=True):
         plt.show()
     plt.close(fig)
     return
+
 
 # plots grid with mean values of ROI(OF) of selected unit
 def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
@@ -72,6 +75,7 @@ def plot_grid(plot_folder, ROI, data_separation, show=False, save=True):
     plt.close(fig)
     return
 
+
 # barplot with mean of z scores of selected units for timebins around transition, error bars: SEM
 def plot_transitions(plot_folder, transition_window, data_separation, mode, show=False, save=True):
     file_data_separation = plot_folder + mode + '_' + data_separation
@@ -86,9 +90,9 @@ def plot_transitions(plot_folder, transition_window, data_separation, mode, show
     errorbar = sem
     number_of_bins = transition_window.shape[1]
     timeframe = 10
-    plt.bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
-    plt.xticks(np.arange(number_of_bins+1),
-               np.arange(-number_of_bins // 2, number_of_bins // 2+1) * timeframe / number_of_bins)
+    plt.bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
+    plt.xticks(np.arange(number_of_bins + 1),
+               np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * timeframe / number_of_bins)
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:
@@ -149,7 +153,7 @@ def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
 
 
 # plots barplot of the mean phaseplots of all included units error bars are SEM
-def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True): #todo binned is already mean??
+def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True):  # todo binned is already mean??
     binned = binned
     file_data_separation = plot_folder + mode + '_' + data_separation
     unit_mean = np.mean(binned, axis=1)
@@ -163,7 +167,7 @@ def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True
     toplot = mean
     errorbar = sem
     number_of_bins = mean.shape[0]
-    plt.bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
+    plt.bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
     plt.xticks(np.arange(number_of_bins + 1),
                np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
 
@@ -174,6 +178,7 @@ def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True
         plt.show()
     plt.close(fig)
     return
+
 
 # plots barplot of the phase of all included units on all vHIP pads error bars are SEM
 def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mode, show, save):
@@ -196,10 +201,11 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mod
         toplot = mean
         errorbar = sem
         number_of_bins = mean.shape[0]
-        axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins)+0.5, toplot, yerr=errorbar, width=1)
-        axs[pad_number//4, pad_number%4].set_xticks(np.arange(number_of_bins+1))
-        axs[pad_number//4, pad_number%4].set_xticklabels(np.arange(-number_of_bins // 2, number_of_bins // 2+1) * 180 * 2 // number_of_bins)
-        axs[pad_number // 4, pad_number % 4].set_title(pad_number+33, loc='right')
+        axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
+        axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
+        axs[pad_number // 4, pad_number % 4].set_xticklabels(
+            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+        axs[pad_number // 4, pad_number % 4].set_title(pad_number + 33, loc='right')
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:

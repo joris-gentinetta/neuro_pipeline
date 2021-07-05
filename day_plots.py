@@ -1,17 +1,19 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.ndimage.filters import gaussian_filter1d
-import math
-from matplotlib import cm
-import matplotlib as mpl
 import copy
+import math
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.ndimage.filters import gaussian_filter1d
 
 idx = pd.IndexSlice
 
+
 # creates the marker cross to show the transitions in classic and raw plots
-#2D mask, 1 in the transition zones, 0 in the rest
+# 2D mask, 1 in the transition zones, 0 in the rest
 def get_ezm_mask(n):
     mask = np.zeros((n, n), dtype=np.float32)
     for x in range(mask.shape[0]):
@@ -25,8 +27,9 @@ def get_ezm_mask(n):
                     mask[x, n - y - 1] = 1
     return mask
 
-#creates a list of the masks for the different ROIs, for the indices of the ROIs in the list, see the thesis
-#n is the size of the 2D grid (nxn), transition areas are defined as open-closed borders +-transition_size
+
+# creates a list of the masks for the different ROIs, for the indices of the ROIs in the list, see the thesis
+# n is the size of the 2D grid (nxn), transition areas are defined as open-closed borders +-transition_size
 def get_ezm_ROI_masks(n, transition_size):
     masks = [np.zeros((n, n), dtype=np.bool) for _ in range(8)]  # create mask for every ROI
     for x in range(n):
@@ -52,10 +55,10 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
     file_name = plot_folder + experiment_name + '_' + mode
     if filter:
         file_name += '_sigma' + str(sigma)
-    file_name +=  '_n' + str(n) + '_minp' + str(
+    file_name += '_n' + str(n) + '_minp' + str(
         minp) + '_maxp' + str(maxp) + '_'
 
-    content = np.copy(aligned) #do not modify aligned directly
+    content = np.copy(aligned)  # do not modify aligned directly
     if filter:
         content[2:] = gaussian_filter1d(content[2:], sigma=sigma, axis=1)  # filter temporally (gaussian)
 
@@ -191,7 +194,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
 
     grid = gaussian_filter1d(grid, sigma=sigma, mode='wrap', axis=1)  # gaussian filter, wraps around at n, 0
 
-    #plot individual figures for all units:
+    # plot individual figures for all units:
     if single_figures:
         for unit in range(number_of_units):
             fig = plt.figure(figsize=(5, 5))
@@ -384,8 +387,8 @@ def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, even
                                              axis=1)
     mean_of_population = np.mean(binned, axis=2)  # mean of all transitons
     mean_of_all = np.mean(downsampled, axis=1)[:, None]  # mean of recording
-    std_of_population = np.std(binned, axis=2) #std of all transitions
-    std_of_all = np.std(downsampled, axis=1)[:, None] #std of recording
+    std_of_population = np.std(binned, axis=2)  # std of all transitions
+    std_of_all = np.std(downsampled, axis=1)[:, None]  # std of recording
     n_of_samples = binned.shape[2]
     z_scores = (mean_of_population - mean_of_all) * np.sqrt(n_of_samples) / std_of_all  # compute z score
     sem = std_of_population / np.sqrt(n_of_samples)  # compute SEM (standard error of the mean)
@@ -485,17 +488,17 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
 
         for quadrant in range(8):
             valid_values_in_quadrant = grid[:, :, unit][np.logical_and(masks[quadrant] == 1, grid[:, :,
-            ## to visulalize the masks:                                                                                unit] != 0)]  # 1d array of all values in quadrant and visited
-            # fig=plt.figure()
-            # plt.imshow(grid[:,:,unit].T)
-            # plt.imshow(masks[quadrant].T, alpha=0.5)
-            # plt.show()
-            # plt.close(fig)
-            mean_in_quadrant = valid_values_in_quadrant.mean()
+                                                                                             ## to visulalize the masks:                                                                                unit] != 0)]  # 1d array of all values in quadrant and visited
+                                                                                             # fig=plt.figure()
+                                                                                             # plt.imshow(grid[:,:,unit].T)
+                                                                                             # plt.imshow(masks[quadrant].T, alpha=0.5)
+                                                                                             # plt.show()
+                                                                                             # plt.close(fig)
+                                                                                             mean_in_quadrant = valid_values_in_quadrant.mean()
             mean_of_unit = grid[:, :, unit][grid[:, :, unit] != 0].mean()
             if mean_of_unit != 0:
                 ROI[unit, quadrant] = (
-                                                  mean_in_quadrant - mean_of_unit) * 100 / mean_of_unit  # percent difference to mean of unit
+                                              mean_in_quadrant - mean_of_unit) * 100 / mean_of_unit  # percent difference to mean of unit
             else:
                 raise Exception('unit mean is zero, code to ctrl-F for: 23456')
 
@@ -669,7 +672,8 @@ def get_ezm_score(rois):
                    + np.abs(rois[:, 4] - rois[:, 5]) + np.abs(rois[:, 5] - rois[:, 7])
                    + np.abs(rois[:, 5] - rois[:, 6]) + np.abs(rois[:, 6] - rois[:, 7]))
     crossing = (a2 - b2) / (a2 + b2)
-    transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (rois[:, 5] + rois[:, 7] + rois[:, 4] + rois[:, 6]) / 4
+    transition = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (
+                rois[:, 5] + rois[:, 7] + rois[:, 4] + rois[:, 6]) / 4
     return open_close, crossing, closed, transition
 
 
@@ -696,7 +700,8 @@ def get_of_score(rois):
                    + np.abs(rois[:, 6] - rois[:, 8]))
 
     of_corners_score = (a1 - b1) / (a1 + b1)
-    of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:, 7] + rois[:, 8]) / 5
+    of_corners = (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3]) / 4 - (
+                rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:, 7] + rois[:, 8]) / 5
     a2 = 1 / 8 * (np.abs(rois[:, 8] - rois[:, 4]) + np.abs(rois[:, 8] - rois[:, 5])
                   + np.abs(rois[:, 8] - rois[:, 6]) + np.abs(rois[:, 8] - rois[:, 7])
                   + np.abs(rois[:, 0] - rois[:, 8]) + np.abs(rois[:, 1] - rois[:, 8])
@@ -718,7 +723,9 @@ def get_of_score(rois):
                    + np.abs(rois[:, 5] - rois[:, 7]) + np.abs(rois[:, 6] - rois[:, 7]))
 
     of_middle_score = (a2 - b2) / (a2 + b2)
-    of_middle = rois[:, 8] - (rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3] + rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:, 7]) / 8
+    of_middle = rois[:, 8] - (
+                rois[:, 0] + rois[:, 1] + rois[:, 2] + rois[:, 3] + rois[:, 4] + rois[:, 5] + rois[:, 6] + rois[:,
+                                                                                                           7]) / 8
     return of_corners_score, of_middle_score, of_corners, of_middle
 
 
@@ -738,7 +745,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
 
     for i, unit in enumerate(cluster_names):
         mask = np.tile(np.invert(original_aligned[i]), (phase.shape[0], 1))  # mask phase values where no spike ocurred
-        masked = np.ma.masked_array(phase, mask=mask) #todo
+        masked = np.ma.masked_array(phase, mask=mask)  # todo
         binned = np.zeros((masked.shape[0], number_of_bins))
         for bin in range(number_of_bins):
             binned[:, bin] = np.sum(masked == bin, axis=1)  # slow part

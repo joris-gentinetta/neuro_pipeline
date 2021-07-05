@@ -1,14 +1,11 @@
-
-
 import glob
-import numpy as np
-import pandas as pd
+import math
 from collections import namedtuple
 
-import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import math
-from scipy import interpolate
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 
 def load_traj(animal, session):
@@ -297,7 +294,7 @@ def get_corner_to_corner_events(prev, dest, frame_trans):
                 if end < len(dest):
                     entry_frame = frame_trans[end]
             if (end < len(dest)) and (dest[end].startswith('corner')) and (entry_frame - start_frame < 100) and (
-            not prev[source] == dest[end]):
+                    not prev[source] == dest[end]):
                 entry_frame = frame_trans[end]
                 entry_count += 1
                 corner_to_corner_entrytime.append(entry_frame)

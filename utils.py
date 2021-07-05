@@ -1,18 +1,21 @@
-import numpy as np
-import pandas as pd
 import copy
 import os
 import winsound
 from time import sleep
 
-#audio alert used to alert the user when a script is done
-#freq: Hz, duration: milliseconds
+import numpy as np
+import pandas as pd
+
+
+# audio alert used to alert the user when a script is done
+# freq: Hz, duration: milliseconds
 def alert(freq=700, duration=600, number_of_beeps=4):
     for _ in range(number_of_beeps):
         winsound.Beep(freq, duration)
         sleep(0.2)
 
-#creates all the subdirectories of the circus folder
+
+# creates all the subdirectories of the circus folder
 def create_directories(target_folder):
     os.mkdir(target_folder)
     os.mkdir(target_folder + 'dat_files')
@@ -26,7 +29,8 @@ def create_directories(target_folder):
     os.mkdir(target_folder + 'spikes_20000')
     os.mkdir(target_folder + 'utils')
 
-#columns: frames (50Hz), first row: x coordinates, second row: y coord, rest: units
+
+# columns: frames (50Hz), first row: x coordinates, second row: y coord, rest: units
 def create_aligned(spikes_50, xy, max_duration, make_path_visible):
     frame_rate = 50
     aligned = np.empty(
@@ -44,11 +48,12 @@ def create_aligned(spikes_50, xy, max_duration, make_path_visible):
         aligned = aligned[:, max_duration * frame_rate:]
     return aligned
 
-#creates the empty archive DataFrame
+
+# creates the empty archive DataFrame
 def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase, number_of_bins_isi):
     level_1 = ['characteristics' for _ in range(17)] \
               + ['mean_waveform' for _ in range(60)] \
-              + ['isi' for _ in range(number_of_bins_isi)]\
+              + ['isi' for _ in range(number_of_bins_isi)] \
               + ['ROI_EZM' for _ in range(8)] \
               + ['ROI_OF' for _ in range(9)] \
               + ['open_closed_entrytime' for _ in range(number_of_bins_transitions)] \
@@ -80,10 +85,11 @@ def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_
     phase_ranges = copy.copy(degree360)
     for i in range(4 * len(vHIP_pads) - 1):
         phase_ranges.extend(degree360)
-    level_2 = ['pad', 'data_row', 'amplitude', 'overall_firing_rate', 'purity', 'ezm_closed_score', 'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
+    level_2 = ['pad', 'data_row', 'amplitude', 'overall_firing_rate', 'purity', 'ezm_closed_score',
+               'ezm_transition_score', 'ezm_closed', 'ezm_transition', 'of_corners_score',
                'of_middle_score', 'of_corners', 'of_middle', 'mean_before', 'mean_after', 'mean_EZM', 'mean_OFT'] \
-              +[i for i in range(60)]\
-              +[ i for i in range(number_of_bins_isi)]\
+              + [i for i in range(60)] \
+              + [i for i in range(number_of_bins_isi)] \
               + [i for i in range(8)] \
               + [i for i in range(9)] \
               + transition_ranges \
