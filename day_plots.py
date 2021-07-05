@@ -8,11 +8,10 @@ import copy
 import pandas as pd
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-# make_path_visible = 0.0001
 idx = pd.IndexSlice
 
-
 # creates the marker cross to show the transitions in classic and raw plots
+#2D mask, 1 in the transition zones, 0 in the rest
 def get_ezm_mask(n):
     mask = np.zeros((n, n), dtype=np.float32)
     for x in range(mask.shape[0]):
@@ -26,7 +25,8 @@ def get_ezm_mask(n):
                     mask[x, n - y - 1] = 1
     return mask
 
-
+#creates a list of the masks for the different ROIs, for the indices of the ROIs in the list, see the thesis
+#n is the size of the 2D grid (nxn), transition areas are defined as open-closed borders +-transition_size
 def get_ezm_ROI_masks(n, transition_size):
     masks = [np.zeros((n, n), dtype=np.bool) for _ in range(8)]  # create mask for every ROI
     for x in range(n):
@@ -44,17 +44,18 @@ def get_ezm_ROI_masks(n, transition_size):
     return masks
 
 
-# controlled and commented
 # plots 2d firing rate, temporally filtered
 def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names, single_figures, multi_figure,
                sigma=10, minp=0, maxp=95, n=150, show=False, save=True, filter=False):
+    ##make file name:
     mode = 'trace_filter_' + str(filter)
     file_name = plot_folder + experiment_name + '_' + mode
     if filter:
         file_name += '_sigma' + str(sigma)
     file_name +=  '_n' + str(n) + '_minp' + str(
         minp) + '_maxp' + str(maxp) + '_'
-    content = np.copy(aligned)
+
+    content = np.copy(aligned) #do not modify aligned directly
     if filter:
         content[2:] = gaussian_filter1d(content[2:], sigma=sigma, axis=1)  # filter temporally (gaussian)
 
@@ -62,8 +63,9 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
     grid = np.zeros((n, n, number_of_units),
                     dtype=np.float32)  # 2d grid containing firing rate at coordinates given by row(y) and column(x)
 
+    ##center the apparatus:
     if environment == 'EZM':
-        sx = sy = 400  # max x coordinate
+        sx = sy = 400  # max x/y coordinate
         content[1] -= 5  # shift upwards
         mask = get_ezm_mask(n)
     elif environment == 'OFT':
@@ -73,6 +75,8 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
 
     cmap = copy.copy(mpl.cm.get_cmap('Blues'))
     cmap.set_bad(color='grey')
+
+    ##create the 2D grid:
     for unit in range(number_of_units):
         for x in range(n):
             for y in range(n):
@@ -81,13 +85,13 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
                 bsum = np.sum(boolean)
                 if bsum != 0:
                     grid[x, y, unit] = np.sum(content[unit + 2][boolean]) / bsum
+
+        ##plot individual figures for all units
         if single_figures:
             vmin = np.percentile(grid[:, :, unit][np.where(grid[:, :, unit] > 0)],
                                  minp)  # minp percent of the values are below vmin
             vmax = np.percentile(grid[:, :, unit][np.where(grid[:, :, unit] > 0)], maxp)
-
             fig = plt.figure(figsize=(5, 5))
-
             im = plt.imshow(np.ma.masked_where(grid[:, :, unit] == 0, grid[:, :, unit]).T, cmap=cmap, origin='upper',
                             interpolation='none', vmin=vmin, vmax=vmax)
             if environment == 'EZM':
@@ -105,6 +109,8 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
             if show:
                 plt.show()
             plt.close(fig)
+
+    ##plot all units on one figure:
     if multi_figure:
         fig, axs = plt.subplots(number_of_units // 4 + 1, 4)
         fig.set_figheight(15)
@@ -153,7 +159,6 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
     return
 
 
-# controlled and commented
 # plots spatially filtered circle (abstraction of the EZM) for every unit
 def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_figures, multi_figure,
                 n=360, sigma=-1, show=False, save=True):
@@ -164,7 +169,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
     content = np.copy(aligned)
     number_of_units = content.shape[0] - 2
     grid = np.zeros((number_of_units, n),
-                    dtype=np.float32)  # rows: unit, columns: position in circle, 0 is on positive x axis
+                    dtype=np.float32)  # rows: unit, columns: angle, angle=0 is on positive x axis
 
     content[1] -= 5  # shift upward
     sx = 400  # max x coordinate
@@ -176,12 +181,17 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
     content[1] *= -1  # flip y axis (x=0,y=0 was originally in top left corner)
     angle = np.arctan2(content[1], content[0])  # get angle in range -pi, -pi
     angle += (angle < 0) * 2 * math.pi  # shift range to 0, 2pi
-    for r in range(n):  # assign mean firingrate to every angle
+
+    ## assign mean firingrate to every angle:
+    for r in range(n):
         boolean = np.logical_and(angle > math.pi * 2 * r / n, angle < math.pi * 2 * (r + 1) / n)
         mask = np.tile(np.invert(boolean), (number_of_units, 1))
         masked = np.ma.masked_array(content[2:], mask=mask)
         grid[:, r] = np.mean(masked, axis=1)
+
     grid = gaussian_filter1d(grid, sigma=sigma, mode='wrap', axis=1)  # gaussian filter, wraps around at n, 0
+
+    #plot individual figures for all units:
     if single_figures:
         for unit in range(number_of_units):
             fig = plt.figure(figsize=(5, 5))
@@ -203,6 +213,8 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
             if show:
                 plt.show()
             plt.close(fig)
+
+    ##plot one figure with all units:
     if multi_figure:
         fig, axs = plt.subplots(number_of_units // 4 + 1, 4)
         fig.set_figheight(15)
@@ -218,12 +230,10 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
                 cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=grid[unit].min(), vmax=grid[unit].max()), cmap='jet'),
                 cax=cax, orientation='vertical',
                 shrink=0.8)
-            # plt.colorbar(cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=grid[unit].min(), vmax=grid[unit].max()), cmap='jet'),
-            #             shrink=0.6, ax =axs[unit // 4, unit % 4])
             my_circle = plt.Circle((0, 0), 0.8, color='white')
+
             axs[unit // 4, unit % 4].add_artist(my_circle)  # make the inside of the pieplot white
             axs[unit // 4, unit % 4].axis('off')
-
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
         axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
@@ -236,7 +246,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
             plt.show()
         plt.close(fig)
 
-    # plot mean of all units:
+    ## plot mean of all units:
     unit_mean = np.mean(grid[1:] - grid[1:].mean(axis=1)[:, None], axis=0)
     colors = cm.jet(plt.Normalize()(unit_mean))
     for quadrant in range(4):
@@ -256,13 +266,13 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
     return
 
 
-# controlled
 # plots 2d image with mean firing rate for every roi
 def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figures, multi_figure, minp=0,
               maxp=100, n=5, show=False, save=True):
     mode = 'grid'
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_minp' + str(minp) + '_maxp' + str(
         maxp) + '_'
+
     content = np.copy(aligned)
     number_of_units = content.shape[0] - 2
     grid = np.zeros((n, n, number_of_units), dtype=np.float32)
@@ -270,6 +280,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
     sx = sy = 350
     content[0] += 6
     content[1] += 6
+    ##make nxn (default 5x5) grid with the mean firing rate:
     for x in range(n):
         for y in range(n):
             boolean = np.logical_and(np.logical_and(content[0] > x / n * sx, content[0] < (x + 1) / n * sx),
@@ -277,6 +288,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
             mask = np.tile(np.invert(boolean), (number_of_units, 1))
             masked = np.ma.masked_array(content[2:], mask=mask)
             grid[x, y, :] = np.mean(masked, axis=1)
+    ##the firing rate per roi is the mean of the firing rates of the grid compartments in the roi #todo
     grid[1:n - 1, :, :] = np.mean(grid[1:n - 1, :, :], axis=0)[None, :, :]
     grid[:, 1:n - 1, :] = np.mean(grid[:, 1:n - 1, :], axis=1)[:, None, :]
     cmap = copy.copy(mpl.cm.get_cmap('Blues'))
@@ -292,7 +304,6 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
             plt.colorbar(im, fraction=0.046, pad=0.04)
             if save:
                 plt.savefig(file_name + str(cluster_names[unit]) + '.jpg')
-
             if unit != 0:
                 plt.title('firing rate unit ' + str(cluster_names[unit]))
             else:
@@ -316,9 +327,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
             cax = divider.append_axes('right', size='5%', pad=0.05)
             fig.colorbar(im, cax=cax, orientation='vertical',
                          shrink=0.8)
-
             axs[unit // 4, unit % 4].axis('off')
-
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
         axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
@@ -348,20 +357,19 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
     return
 
 
-# controlled and commented
 # plots the z score of the firing rate for every unit, and the mean of the z scores of all units
-
-
 def plot_events(plot_folder, experiment_name, aligned, cluster_names, mode, event_indices, archive, single_figures,
                 multi_figure,
                 n=250, number_of_bins=20, show=False, save=True, do_archive=True):  # +- n frames around event
     file_name = plot_folder + experiment_name + '_' + mode + '_n' + str(n) + '_'
     content = np.copy(aligned)
     number_of_units = content.shape[0] - 2
+    #downsample the
     downsampled = np.empty((number_of_units, content.shape[1] // (2 * n) * number_of_bins))
     for step in range(downsampled.shape[1]):
         downsampled[:, step] = np.mean(
             aligned[2:, step * (2 * n) // number_of_bins:(step + 1) * (2 * n) // number_of_bins], axis=1)
+
     transition_indices = [transition_index for transition_index in event_indices if
                           transition_index + n <= content.shape[1] and transition_index - n >= 0]
     if not transition_indices:  # check if there are any valid events
@@ -747,7 +755,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
         #         for angle in range(-180 , 180):
         #             phase_distribution[:, angle + 180 ] = np.sum(masked == angle, axis=1)
         for bin in range(number_of_bins):
-            binned[:, bin] = np.sum(masked == bin, axis=1)  # slow part #change to mean
+            binned[:, bin] = np.sum(masked == bin, axis=1)  # slow part
         # mean = np.mean(binned, axis=1)
         unit_mean = np.mean(binned, axis=1)
         normalized = (binned - unit_mean[:, None]) / unit_mean[:, None]  # mean = np.where(mean != 0, mean, 1)

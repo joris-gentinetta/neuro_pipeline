@@ -1,17 +1,17 @@
 ######################################
-animal = '112'  # one of the sets with one day
+animal = '112'
 toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
+#see the thesis for an explanation of the options
 
-max_duration = 1200  # seconds # if negative, crops from end, else from start
+max_duration = 1200  #max duration to analize,  if negative, crops from end, else from start, seconds
 
-delete_plot_folder = False
-show = False
-save = True
-do_archive = True
-single_figures = True
-multi_figure = True
+show = False #show plots?
+save = True #save plots?
+do_archive = True #store characteristics to archive?
+single_figures = True #plot single figures (to put in papers)
+multi_figure = True #plot figures together (for quick overview)
 alert_when_done = False
 ######################################
 import copy
@@ -25,7 +25,8 @@ import day_plots
 from natsort import natsorted
 import utils
 
-make_path_visible = 0.0001
+make_path_visible = 0.0001 #the path of the mouse is found in the 2D grid by taking all coordinates with non-zero spikes,
+# ,without adding make_path_visible to all coordinates where the mouse was, coordinates with no spikes would not be considered visited by the mouse
 
 transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                    'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime',
@@ -40,27 +41,27 @@ transition_keys = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open
 # 'nosedip_starttime', 'nosedip_stoptime']
 
 start_time = time.time()
+
+##params:
+frame_rate = 50
+sampling_rate = 20000
+number_of_bins_transitions = 20  #in 5 second window around transitions #has to be the same as in 3_post_processing.py
+number_of_bins_phase = 8  #in 360 degrees #has to be the same as in 3_post_processing.py
+
+##folder/file names:
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'
 target_folder = data_folder + animal + '/' + sorter + '/'
 all_plots = target_folder + 'plots/'
-frame_rate = 50
-sampling_rate = 20000
-
-number_of_bins_transitions = 20  # in 10 second window around transitions
-number_of_bins_phase = 8  # phaseplot
-# factor = 360//number_of_bins_phase
-
 animal_folder = data_folder + animal + '/'
 experiment_names = natsorted(os.listdir(animal_folder))
 if 'circus' in experiment_names:
     experiment_names.remove('circus')
 
 
-
+##get files:
 cluster_names = np.load(target_folder + 'utils/cluster_names.npy')
 vHIP_pads = np.load(target_folder + 'utils/vHIP_pads.npy')
-
 archive = pd.read_pickle(target_folder + 'archive.pkl')
 
 for experiment_name in experiment_names:
@@ -77,34 +78,29 @@ for experiment_name in experiment_names:
     else:
         continue
 
+    ##file names:
     eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
-    spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy'
-    # ptriggerfile = target_folder + experiment_name + '_trigger.npy'
+    spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy
 
-
-    # physio_trigger = int(np.load(ptriggerfile) * frame_rate // 20000)
-
-    # get events/movement
+    ##get files:
     with open(eventfile, 'rb') as f:
         events = pkl.load(f)
-
-    spikes_50 = np.load(spikes_50_file) * frame_rate
+    spikes_50 = np.load(spikes_50_file) * frame_rate #contains the firing rates per frame
     xy = np.load(target_folder + 'movement_files/' + experiment_name + '.npy')
-    aligned = utils.create_aligned(spikes_50, xy, max_duration, make_path_visible)
+
+    aligned = utils.create_aligned(spikes_50, xy, max_duration, make_path_visible) #1. row: x coordinates, 2. row: y coordinates, rest: units, columns: frames 50Hz
     if do_archive:
         archive.loc[:, ('characteristics', 'mean_' + environment)] = np.mean(aligned[2:], axis=1)
 
 #################################
     if 'phase' in toplot:
-        #    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase)
-        phase_aligned = (np.load(
-            target_folder + 'vHIP_phase/' + experiment_name + '.npy') + 180) * number_of_bins_phase // 360
-        spikes_20000_aligned = np.load(target_folder + 'spikes_20000/' + experiment_name + '.npy')
+        phase_aligned = (np.load(target_folder + 'vHIP_phase/' + experiment_name + '.npy') + 180) * number_of_bins_phase // 360 #rows: units, columns: frames, 20000Hz contains the bin numbers
+        spikes_20000_aligned = np.load(target_folder + 'spikes_20000/' + experiment_name + '.npy') #rows: units, columns: frames, 20000Hz
 
+        ##crop to max duration:
         if max_duration >= 0:
             phase_aligned = phase_aligned[:, :max_duration * sampling_rate]
             spikes_20000_aligned = spikes_20000_aligned[:, :max_duration * sampling_rate]
-
         else:
             phase_aligned = phase_aligned[:, max_duration * sampling_rate:]
             spikes_20000_aligned = spikes_20000_aligned[:, max_duration * sampling_rate:]
@@ -163,6 +159,7 @@ for experiment_name in experiment_names:
                                              n=4, show=show, save=save, do_archive=do_archive)
 
 #################################
+    ##compute the separation scores
     if do_archive:
         if environment == 'EZM':
             archive.loc[:, ('characteristics', 'ezm_closed_score')], archive.loc[:,
@@ -176,6 +173,7 @@ for experiment_name in experiment_names:
             archive.loc[:, ('characteristics', 'of_corners')], archive.loc[:,
                                                                ('characteristics', 'of_middle')] = day_plots.get_of_score(
                 archive.loc[:, 'ROI_OF'].values)
+
 if do_archive:
     archive.to_pickle(target_folder + 'archive.pkl')
 end_time = time.time()

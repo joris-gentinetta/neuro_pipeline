@@ -5,13 +5,14 @@ import os
 import winsound
 from time import sleep
 
+#audio alert used to alert the user when a script is done
+#freq: Hz, duration: milliseconds
 def alert(freq=700, duration=600, number_of_beeps=4):
-    #duration: milliseconds
-    #freq: Hz
     for _ in range(number_of_beeps):
         winsound.Beep(freq, duration)
         sleep(0.2)
 
+#creates all the subdirectories of the circus folder
 def create_directories(target_folder):
     os.mkdir(target_folder)
     os.mkdir(target_folder + 'dat_files')
@@ -25,6 +26,7 @@ def create_directories(target_folder):
     os.mkdir(target_folder + 'spikes_20000')
     os.mkdir(target_folder + 'utils')
 
+#columns: frames (50Hz), first row: x coordinates, second row: y coord, rest: units
 def create_aligned(spikes_50, xy, max_duration, make_path_visible):
     frame_rate = 50
     aligned = np.empty(
@@ -42,6 +44,7 @@ def create_aligned(spikes_50, xy, max_duration, make_path_visible):
         aligned = aligned[:, max_duration * frame_rate:]
     return aligned
 
+#creates the empty archive DataFrame
 def create_archive(vHIP_pads, cluster_names, number_of_bins_transitions, number_of_bins_phase, number_of_bins_isi):
     level_1 = ['characteristics' for _ in range(17)] \
               + ['mean_waveform' for _ in range(60)] \

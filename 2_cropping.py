@@ -69,60 +69,50 @@ for index, experiment_name in enumerate(experiment_names):
         for cut in range(cutter.shape[1]):
             boolean_sampling_rate[cutter[0, cut]*sampling_rate//frame_rate: cutter[1, cut]*sampling_rate//frame_rate] = 0 #mask the values to cut out 20000Hz
             boolean_frame_rate[cutter[0, cut]: cutter[1, cut]] = 0 #mask the values to cut out 20000Hz
+        ##discard the masked values:
         mPFC_concatenated = mPFC_concatenated[:, boolean_sampling_rate]
         vHIP_concatenated = vHIP_concatenated[:, boolean_sampling_rate]
         mPFC_spike_range = mPFC_spike_range[:, boolean_sampling_rate]
         xy = xy[:, boolean_frame_rate]
-        np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range.astype(np.int16))
+        np.save(target_folder + 'mPFC_spike_range/' + experiment_name, mPFC_spike_range.astype(np.int16))#used to calculate mean waveform in 4_sanity_check.py
 
     np.save(target_folder + 'movement_files/' + experiment_name, xy.astype(np.float32))
-#start todo revert
+    ##theta bandpass filtering:
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
-    #theta_filtered = vHIP_concatenated
-    #stop todo
-#start todo revert
-    # hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # use np.unwrap()?
-    hilbert_phase = theta_filtered
+    hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  #get theta phase
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
-    data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat')
-    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase.astype(np.int16)) #todo determine dtype
-    logbook[index] = data_for_spikesorting.shape[0]
+    data_for_spikesorting.tofile(target_folder + 'dat_files/' + experiment_names[index] + '_' + str(index) + '.dat') #used by spykingcircus
+    np.save(target_folder + 'vHIP_phase/' + experiment_name, hilbert_phase.astype(np.int16)) #save theta phase
+    logbook[index] = data_for_spikesorting.shape[0] #logbook[i] contains the length of session i, 20000Hz
 np.save(target_folder + 'utils/logbook', logbook.astype(np.uint32))
 
-
-
-# start clustering process
 before_clustering_time = time.time()
-
+##start clustering process:
 cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10'
 os.system(cluster_command)
 
-
-
+##convert output of spykingcircus for the phy viewer:
 converter_command = 'spyking-circus ' + circus_entrypoint + ' -m converting -c 10'
 args = shlex.split(converter_command)
-
 converter = subprocess.run(args, stdout=subprocess.PIPE,
                            input='a\n', encoding='ascii')
-
 print('Converter return_code: {}'.format(converter.returncode))
-# print(converter.stdout)
+
 end_time = time.time()
 print('Cropping for animal {} done! \nTime needed: {} minutes. Time for SpykingCircus: {}'.format(animal, (end_time-start_time)/60, (end_time-before_clustering_time)/60))
 if alert_when_done:
     alert()
 
-
-# start viewer
+##create a batchfile to start the phy viewer by clicking on the file
 viewer_command = '@echo off \ncall conda activate circus \ncircus-gui-python ' + circus_entrypoint
 with open(target_folder + 'utils/start_viewer.bat', 'w') as f:
     f.write(viewer_command)
+
+##start the phy viewer:
 viewer_command = 'circus-gui-python ' + circus_entrypoint
 args = shlex.split(viewer_command)
-
 viewer = subprocess.run(args, stdout=subprocess.PIPE,
                         encoding='ascii')
-
 print('Viewer return_code: {}'.format(viewer.returncode))
