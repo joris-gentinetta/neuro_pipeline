@@ -559,8 +559,8 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
     return archive
 
 
-# used for EZM
-# plots bar diagramm with one bar per ROI and unit, indicating percent difference in firingrate in ROI to mean firingrate of unit
+# used for OF
+# plots bar diagramm with one bar per ROI and unit, indicating percent difference in firing rate in ROI to mean firing rate of unit
 # plots the mean of all single unit plots
 # fills archive['ROI_OF']
 def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, single_figures, multi_figure,
@@ -729,7 +729,6 @@ def get_of_score(rois):
     return of_corners_score, of_middle_score, of_corners, of_middle
 
 
-# controlled and commented
 # plot number of spikes per range of phases for every unit
 # plot plot average number of spikes per range of phases, where every unit contributes the same
 # makes theta_phase of archive
@@ -757,9 +756,12 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
             if single_figures:
                 for row, vHIP_pad in enumerate(vHIP_pads):
                     fig = plt.figure(figsize=(5, 5))
-                    plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
-                    plt.xticks(np.arange(number_of_bins + 1),
-                               np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+                    # plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
+                    ##todo:
+                    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 // number_of_bins, normalized[row])
+
+                    # plt.xticks(np.arange(number_of_bins + 1),
+                    #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
                     if save:
                         plt.savefig(file_name + 'unit_' + str(unit) + '_pad_' + str(vHIP_pad) + '.jpg')
                     if show:
