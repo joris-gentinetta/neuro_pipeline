@@ -25,6 +25,7 @@ def create_directories(target_folder):
     os.mkdir(target_folder + 'vHIP_raw')
     os.mkdir(target_folder + 'mPFC_spike_range')
     os.mkdir(target_folder + 'movement_files')
+    os.mkdir(target_folder + 'transition_files')
     os.mkdir(target_folder + 'spikes_50')
     os.mkdir(target_folder + 'spikes_20000')
     os.mkdir(target_folder + 'utils')

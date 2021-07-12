@@ -20,7 +20,7 @@ import utils
 from load_intan_rhd_format.load_intan_rhd_format import read_data
 
 first_pad_vHIP = 33  # where to divide between vHIP and mPFC channels
-butter_order = 3  # order of the butterworh filter
+butter_order = 3  # order of the butterworth filter
 theta_band = [4, 12]  # range for bandpass filtering to theta band
 spike_band = [300, 3000]  # range for bandpass filtering to spike band
 sampling_rate = 20000  # sampling rate of the recording system

@@ -1,11 +1,11 @@
 ######################################
 animal = '112'
 
-max_duration = 1200  # max duration to analize,  if negative, crops from end, else from start, seconds
+max_duration = 1200  # max duration to analyze,  if negative, crops from end, else from start, seconds
 show = False  # show plots?
 save = True  # save plots?
 do_archive = True  # store characteristics to archive?
-single_figures = True  # plot single figures (to put in papers)
+single_figures = True  # plot single figures (to put in presentations etc.)
 multi_figure = True  # plot figures together (for quick overview)
 alert_when_done = False
 
@@ -77,12 +77,12 @@ for experiment_name in experiment_names:
         continue
 
     ##file names:
-    eventfile = data_folder + animal + '/' + experiment_name + '/ephys_processed/' + experiment_name + '_events.pkl'
+    transition_file = target_folder + 'transition_files/' + experiment_name + '.pkl'
     spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy
 
     ##get files:
-    with open(eventfile, 'rb') as f:
-        events = pkl.load(f)
+    with open(transition_file, 'rb') as f:
+        transitions = pkl.load(f)
     spikes_50 = np.load(spikes_50_file) * frame_rate  # contains the firing rates per frame
     xy = np.load(target_folder + 'movement_files/' + experiment_name + '.npy')
 
@@ -131,7 +131,7 @@ for experiment_name in experiment_names:
                                   n=360, sigma=-1, show=show, save=save)  # sigma = -1 sets sigma matching n
         if 'transitions' in toplot:
             for mode in transition_keys:
-                event_indices = events['transitions'][mode]
+                event_indices = transitions[mode]
                 archive = day_plots.plot_events(plot_folder, experiment_name, aligned, cluster_names, mode,
                                                 event_indices,
                                                 archive, single_figures, multi_figure,

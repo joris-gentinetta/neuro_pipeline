@@ -26,7 +26,7 @@ stimes = 'spike_times.npy'
 sclusters = 'spike_clusters.npy'
 infofile = 'cluster_info.tsv'
 
-##params
+##params:
 frame_rate = 50
 sampling_rate = 20000
 number_of_bins_transitions = 20  # in 5 second window around transitions #has to be the same as in 5_day_analysis.py
