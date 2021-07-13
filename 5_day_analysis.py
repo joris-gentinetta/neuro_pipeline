@@ -5,8 +5,8 @@ max_duration = 1200  # max duration to analyze,  if negative, crops from end, el
 show = True  # show plots?
 save = False  # save plots?
 do_archive = False  # store characteristics to archive?
-single_figures = False  # plot single figures (to put in presentations etc.)
-multi_figure = True  # plot figures together (for quick overview)
+single_figures = True  # plot single figures (to put in presentations etc.)
+multi_figure = False  # plot figures together (for quick overview)
 alert_when_done = False
 
 toplot = ['phase']
@@ -43,7 +43,7 @@ start_time = time.time()
 frame_rate = 50
 sampling_rate = 20000
 number_of_bins_transitions = 20  # in 5 second window around transitions #has to be the same as in 3_post_processing.py
-number_of_bins_phase = 8  # in 360 degrees #has to be the same as in 3_post_processing.py
+number_of_bins_phase = 20  # in 360 degrees #has to be the same as in 3_post_processing.py
 make_path_visible = 0.0001  # the path of the mouse is found in the 2D grid by taking all coordinates with non-zero spikes,
 # ,without adding make_path_visible to all coordinates where the mouse was, coordinates with no spikes would not be considered visited by the mouse
 

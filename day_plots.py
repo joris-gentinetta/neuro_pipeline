@@ -759,7 +759,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                     fig = plt.figure(figsize=(5, 5))
                     # plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
                     ##todo:
-                    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
+                    plt.polar((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
 
                     # plt.xticks(np.arange(number_of_bins + 1),
                     #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
@@ -784,7 +784,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                     # axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
                     # axs[pad_number // 4, pad_number % 4].set_xticklabels(
                     #     np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
-                    axs[pad_number // 4, pad_number % 4].plot(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
+                    axs[pad_number // 4, pad_number % 4].plot((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
 
                     axs[pad_number // 4, pad_number % 4].set_title(pad_number + 33, loc='right')
 
@@ -799,7 +799,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
             # plt.bar(np.arange(number_of_bins) + 0.5, normalized.mean(axis=0), width=1)
             # plt.xticks(np.arange(number_of_bins + 1),
             #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins
-            plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins,
+            plt.polar((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2 / number_of_bins,
                       [*normalized.mean(axis=0), normalized.mean(axis=0)[0]])
 
             if save:

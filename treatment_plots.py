@@ -171,7 +171,7 @@ def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True
     # plt.bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
     # plt.xticks(np.arange(number_of_bins + 1),
     #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
-    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins,
+    plt.polar((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2 / number_of_bins,
               [*toplot, toplot[0]])
     if save:
         plt.savefig(file_data_separation + '.jpg')
@@ -207,7 +207,7 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mod
         # axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
         # axs[pad_number // 4, pad_number % 4].set_xticklabels(
         #     np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
-        axs[pad_number // 4, pad_number % 4].plot(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2
+        axs[pad_number // 4, pad_number % 4].plot((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2
                                                   / number_of_bins, [*toplot, toplot[0]])
 
         axs[pad_number // 4, pad_number % 4].set_title(pad_number + 33, loc='right')

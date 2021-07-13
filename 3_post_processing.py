@@ -29,9 +29,9 @@ infofile = 'cluster_info.tsv'
 ##params:
 frame_rate = 50
 sampling_rate = 20000
-number_of_bins_transitions = 20  # in 5 second window around transitions #has to be the same as in 5_day_analysis.py
-number_of_bins_phase = 8  # in 360 degrees #has to be the same as in 5_day_analysis.py
-number_of_bins_isi = 200  # ISI binsize is 0.5 ms #has to be the same as in 4_sanity_check.py
+number_of_bins_transitions = 20  # in 5 second window around transitions #has to be the same as in 5_day_analysis.py #even number
+number_of_bins_phase = 20  # in 360 degrees #has to be the same as in 5_day_analysis.py #even number
+number_of_bins_isi = 200  # ISI binsize is 0.5 ms #has to be the same as in 4_sanity_check.py #even number
 
 info = pd.read_csv(folder + infofile, sep='\t', index_col=0)  # file with all units produced by spyking circus
 idx = np.array(info.index)  # the IDs of the units
