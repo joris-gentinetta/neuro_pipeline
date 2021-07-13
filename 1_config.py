@@ -1,7 +1,7 @@
 ######################################
-animal = '444'  # format: <treatment_id><animal_id> #treatment_ids: {1: none, 2: saline, 3: medication}
+animal = '999'  # format: <treatment_id><animal_id> #treatment_ids: {1: none, 2: saline, 3: medication}
 max_impedance = 2500000  # all channles with impedance above max_impedance are discarded
-select_channels = True  # wheter to select the channels manually
+select_channels = False  # wheter to select the channels manually
 delete_circus_folder = True  # set to True if you want to redo the analysis
 alert_when_done = True  # audio alert when the script is done
 ######################################

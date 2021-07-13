@@ -1,15 +1,15 @@
 ######################################
-animal = '112'
+animal = '999'
 
 max_duration = 1200  # max duration to analyze,  if negative, crops from end, else from start, seconds
-show = False  # show plots?
-save = True  # save plots?
-do_archive = True  # store characteristics to archive?
-single_figures = True  # plot single figures (to put in presentations etc.)
+show = True  # show plots?
+save = False  # save plots?
+do_archive = False  # store characteristics to archive?
+single_figures = False  # plot single figures (to put in presentations etc.)
 multi_figure = True  # plot figures together (for quick overview)
 alert_when_done = False
 
-toplot = ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
+toplot = ['phase']
 # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
 # see the thesis for an explanation of the options
@@ -78,7 +78,7 @@ for experiment_name in experiment_names:
 
     ##file names:
     transition_file = target_folder + 'transition_files/' + experiment_name + '.pkl'
-    spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy
+    spikes_50_file = target_folder + 'spikes_50/' + experiment_name + '.npy'
 
     ##get files:
     with open(transition_file, 'rb') as f:

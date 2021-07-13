@@ -487,14 +487,15 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
                 grid[x, y, :] = np.mean(masked, axis=1)  # assign mean firing rate per coordinate)
 
         for quadrant in range(8):
-            valid_values_in_quadrant = grid[:, :, unit][np.logical_and(masks[quadrant] == 1, grid[:, :,
-                                                                                             ## to visulalize the masks:                                                                                unit] != 0)]  # 1d array of all values in quadrant and visited
-                                                                                             # fig=plt.figure()
-                                                                                             # plt.imshow(grid[:,:,unit].T)
-                                                                                             # plt.imshow(masks[quadrant].T, alpha=0.5)
-                                                                                             # plt.show()
-                                                                                             # plt.close(fig)
-                                                                                             mean_in_quadrant = valid_values_in_quadrant.mean()
+            valid_values_in_quadrant = grid[:, :, unit][np.logical_and(masks[quadrant] == 1, grid[:, :, unit] != 0)]  # 1d array of all values in quadrant and visited
+
+             ## to visulalize the masks:
+             # fig=plt.figure()
+             # plt.imshow(grid[:,:,unit].T)
+             # plt.imshow(masks[quadrant].T, alpha=0.5)
+             # plt.show()
+             # plt.close(fig)
+            mean_in_quadrant = valid_values_in_quadrant.mean()
             mean_of_unit = grid[:, :, unit][grid[:, :, unit] != 0].mean()
             if mean_of_unit != 0:
                 ROI[unit, quadrant] = (
@@ -758,7 +759,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                     fig = plt.figure(figsize=(5, 5))
                     # plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
                     ##todo:
-                    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 // number_of_bins, normalized[row])
+                    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
 
                     # plt.xticks(np.arange(number_of_bins + 1),
                     #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
@@ -772,17 +773,19 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                         plt.show()
                     plt.close(fig)
             if multi_figure:
-                fig, axs = plt.subplots(8, 4, sharex=True, sharey=True)
+                fig, axs = plt.subplots(8, 4, sharex=True, sharey=True, subplot_kw=dict(polar=True))
                 fig.set_figheight(15)
                 fig.set_figwidth(15)
                 for row, vHIP_pad in enumerate(vHIP_pads):
                     toplot = normalized[row]
                     pad_number = vHIP_pad - 33
                     number_of_bins = toplot.shape[0]
-                    axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins) + 0.5, toplot, width=1)
-                    axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
-                    axs[pad_number // 4, pad_number % 4].set_xticklabels(
-                        np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+                    # axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins) + 0.5, toplot, width=1)
+                    # axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
+                    # axs[pad_number // 4, pad_number % 4].set_xticklabels(
+                    #     np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+                    axs[pad_number // 4, pad_number % 4].plot(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
+
                     axs[pad_number // 4, pad_number % 4].set_title(pad_number + 33, loc='right')
 
                 if save:
@@ -793,9 +796,11 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                 plt.close(fig)
 
             fig = plt.figure(figsize=(5, 5))
-            plt.bar(np.arange(number_of_bins) + 0.5, normalized.mean(axis=0), width=1)
-            plt.xticks(np.arange(number_of_bins + 1),
-                       np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+            # plt.bar(np.arange(number_of_bins) + 0.5, normalized.mean(axis=0), width=1)
+            # plt.xticks(np.arange(number_of_bins + 1),
+            #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins
+            plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins,
+                      [*normalized.mean(axis=0), normalized.mean(axis=0)[0]])
 
             if save:
                 plt.savefig(file_name + '_unit_' + str(unit) + 'all_pads.jpg')

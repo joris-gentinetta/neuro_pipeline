@@ -1,5 +1,5 @@
 ######################################
-animals = ['11', '12']  # set of animals, 2 char string, example animal 9: '09'
+animals = ['11','12']  # set of animals, 2 char string, example animal 9: '09'
 treatment = 'none'  # one of ['none', 'saline', 'medication']
 score = 'ezm_closed_score'
 # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score', 'treatment_score']
@@ -13,7 +13,7 @@ data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshol
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
 # 'of_middle_score': firing rate higher in the middle, 'treatment_score': firing rate higher before treatment]
 
-toplot = ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
+toplot = ['phase']
 # selection of: ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
 transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                     'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime',
@@ -30,8 +30,8 @@ phase_modes = ['theta_phase_OFT', 'theta_phase_EZM', 'theta_phase_before', 'thet
 # in what environment to correlate spikes/phase
 
 delete_plot_folder = False  # delete the subfolder of plots with the specific settings chosen?
-show = False
-save = True
+show = True
+save = False
 alert_when_done = False
 import os
 import shutil
@@ -170,6 +170,7 @@ for data_separation in data_separations:
                 mean_theta += data.loc[:, pad_column].values.astype(np.float32)
                 counter += 1
             mean_theta = mean_theta // counter
+
 
             ##plot phase plot:
             treatment_plots.plot_phase(plot_folder, mean_theta, data_separation, phase_mode,

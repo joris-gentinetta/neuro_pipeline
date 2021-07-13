@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib import cm
+import math
 
 make_path_visible = 0.0001
 idx = pd.IndexSlice
@@ -152,7 +153,7 @@ def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
     return
 
 
-# plots barplot of the mean phaseplots of all included units error bars are SEM
+# plots barplot of the mean phaseplots of all included units, error bars are SEM
 def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True):  # todo binned is already mean??
     binned = binned
     file_data_separation = plot_folder + mode + '_' + data_separation
@@ -167,10 +168,11 @@ def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True
     toplot = mean
     errorbar = sem
     number_of_bins = mean.shape[0]
-    plt.bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
-    plt.xticks(np.arange(number_of_bins + 1),
-               np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
-
+    # plt.bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
+    # plt.xticks(np.arange(number_of_bins + 1),
+    #            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+    plt.polar(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2 / number_of_bins,
+              [*toplot, toplot[0]])
     if save:
         plt.savefig(file_data_separation + '.jpg')
     if show:
@@ -185,7 +187,7 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mod
     mode = mode + '_all_pads'
     file_data_separation = plot_folder + mode + '_' + data_separation
 
-    fig, axs = plt.subplots(8, 4, sharex=True, sharey=True)
+    fig, axs = plt.subplots(8, 4, sharex=True, sharey=True, subplot_kw=dict(polar=True))
     fig.set_figheight(15)
     fig.set_figwidth(15)
     for pad_name in pad_columns:
@@ -201,10 +203,13 @@ def plot_phase_all_pads(plot_folder, all_pads, pad_columns, data_separation, mod
         toplot = mean
         errorbar = sem
         number_of_bins = mean.shape[0]
-        axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
-        axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
-        axs[pad_number // 4, pad_number % 4].set_xticklabels(
-            np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+        # axs[pad_number // 4, pad_number % 4].bar(np.arange(number_of_bins) + 0.5, toplot, yerr=errorbar, width=1)
+        # axs[pad_number // 4, pad_number % 4].set_xticks(np.arange(number_of_bins + 1))
+        # axs[pad_number // 4, pad_number % 4].set_xticklabels(
+        #     np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * 180 * 2 // number_of_bins)
+        axs[pad_number // 4, pad_number % 4].plot(np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) * math.pi * 2
+                                                  / number_of_bins, [*toplot, toplot[0]])
+
         axs[pad_number // 4, pad_number % 4].set_title(pad_number + 33, loc='right')
     if save:
         plt.savefig(file_data_separation + '.jpg')

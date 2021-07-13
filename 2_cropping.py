@@ -1,5 +1,5 @@
 ######################################
-animal = '444'
+animal = '999'
 alert_when_done = True
 ######################################
 
@@ -82,15 +82,22 @@ for index, experiment_name in enumerate(experiment_names):
         np.save(target_folder + 'mPFC_spike_range/' + experiment_name,
                 mPFC_spike_range.astype(np.int16))  # used to calculate mean waveform in 4_sanity_check.py
         ####todo:
-        transitions = {}
-        for mode in events['transitions']:
-            event_indices = events['transitions'][mode]
-            event_boolean = np.zeros(mPFC_concatenated.shape[1], dtype=bool)
-            event_boolean[event_indices] = 1
-            event_boolean = event_boolean[boolean_frame_rate]
-            transitions[mode] = list(np.nonzero(event_boolean))
-    with open(target_folder + 'transition_files/' + experiment_name + '.pkl', 'wb') as f:
-        pkl.dump(transitions, f)
+        if experiment_name[-9:-6] == 'EZM':
+            transitions = {}
+            for mode in events['transitions']:
+                event_indices = events['transitions'][mode]
+                event_boolean = np.zeros(mPFC_concatenated.shape[1], dtype=bool)
+                event_boolean[event_indices] = 1
+                event_boolean = event_boolean[boolean_frame_rate]
+                transitions[mode] = list(np.nonzero(event_boolean))
+    else:
+        if experiment_name[-9:-6] == 'EZM':
+            transitions = {}
+            for mode in events['transitions']:
+                transitions[mode] = events['transitions'][mode]
+    if experiment_name[-9:-6] == 'EZM':
+        with open(target_folder + 'transition_files/' + experiment_name + '.pkl', 'wb') as f:
+            pkl.dump(transitions, f)
     np.save(target_folder + 'movement_files/' + experiment_name, xy.astype(np.float32))
     ##theta bandpass filtering:
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
