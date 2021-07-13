@@ -291,7 +291,7 @@ def plot_grid(plot_folder, experiment_name, aligned, cluster_names, single_figur
             mask = np.tile(np.invert(boolean), (number_of_units, 1))
             masked = np.ma.masked_array(content[2:], mask=mask)
             grid[x, y, :] = np.mean(masked, axis=1)
-    ##the firing rate per roi is the mean of the firing rates of the grid compartments in the roi #todo
+    ##the firing rate per roi is the mean of the firing rates of the grid compartments in the roi
     grid[1:n - 1, :, :] = np.mean(grid[1:n - 1, :, :], axis=0)[None, :, :]
     grid[:, 1:n - 1, :] = np.mean(grid[:, 1:n - 1, :], axis=1)[:, None, :]
     cmap = copy.copy(mpl.cm.get_cmap('Blues'))
@@ -520,7 +520,7 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
             plt.close(fig)
 
     if (save or show) and multi_figure:
-        fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
+        fig, axs = plt.subplots(math.ceil(number_of_units / 4), 4, sharex=True)
         fig.set_figheight(15)
         fig.set_figwidth(15)
         for unit in range(number_of_units):
@@ -532,9 +532,9 @@ def plot_arms(plot_folder, experiment_name, aligned, cluster_names, archive, sin
             axs[unit // 4, unit % 4].set_xticklabels([0, 1, 2, 3, 4, 6, 5, 7])
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
-        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:] #todo
-        # for ax_to_delete in axes_to_delete:
-        #     fig.delaxes(ax_to_delete)
+        axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        for ax_to_delete in axes_to_delete:
+            fig.delaxes(ax_to_delete)
         if save:
             plt.savefig(file_name + 'multiple' + '.jpg')
         if show:
@@ -613,7 +613,7 @@ def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, 
                 plt.show()
             plt.close(fig)
     if (save or show) and multi_figure:
-        fig, axs = plt.subplots(number_of_units // 4 + 1, 4, sharex=True)
+        fig, axs = plt.subplots(math.ceil(number_of_units / 4), 4, sharex=True)
         fig.set_figheight(15)
         fig.set_figwidth(15)
         for unit in range(number_of_units):
@@ -624,9 +624,9 @@ def plot_corners(plot_folder, experiment_name, aligned, cluster_names, archive, 
             axs[unit // 4, unit % 4].set_xticklabels(np.arange(9))
             axs[unit // 4, unit % 4].set_title(cluster_names[unit], loc='right')
 
-        # axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:] #todo
-        # for ax_to_delete in axes_to_delete:
-        #     fig.delaxes(ax_to_delete)
+        axes_to_delete = axs[(number_of_units - 1) // 4, (number_of_units - 1) % 4 + 1:]
+        for ax_to_delete in axes_to_delete:
+            fig.delaxes(ax_to_delete)
         if save:
             plt.savefig(file_name + 'multiple' + '.jpg')
         if show:
@@ -745,7 +745,7 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
 
     for i, unit in enumerate(cluster_names):
         mask = np.tile(np.invert(original_aligned[i]), (phase.shape[0], 1))  # mask phase values where no spike ocurred
-        masked = np.ma.masked_array(phase, mask=mask)  # todo
+        masked = np.ma.masked_array(phase, mask=mask)
         binned = np.zeros((masked.shape[0], number_of_bins))
         for bin in range(number_of_bins):
             binned[:, bin] = np.sum(masked == bin, axis=1)  # slow part
@@ -758,7 +758,6 @@ def plot_phase(phase_aligned, original_aligned, vHIP_pads, plot_folder, experime
                 for row, vHIP_pad in enumerate(vHIP_pads):
                     fig = plt.figure(figsize=(5, 5))
                     # plt.bar(np.arange(number_of_bins) + 0.5, normalized[row], width=1)
-                    ##todo:
                     plt.polar((np.arange(-number_of_bins // 2, number_of_bins // 2 + 1) + 0.5) * math.pi * 2 / number_of_bins, [*normalized[row], normalized[row][0]])
 
                     # plt.xticks(np.arange(number_of_bins + 1),

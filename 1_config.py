@@ -201,11 +201,9 @@ for index, experiment_name in tqdm(enumerate(experiment_names)):
     np.save(target_folder + 'mPFC_raw/' + experiment_names[index], mPFC_concatenated.astype(np.int16))
     np.save(target_folder + 'vHIP_raw/' + experiment_names[index], vHIP_concatenated.astype(np.int16))
     # filter mPFC data to spike-range
-    ##start todo revert changes
     sos_spike = butter(N=butter_order, Wn=spike_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     spike_filtered = sosfiltfilt(sos_spike, mPFC_concatenated, axis=1) - np.median(mPFC_concatenated, axis=0)[None, :]
-    # spike_filtered = mPFC_concatenated #todo remove
-    ##end todo
+
     np.save(target_folder + 'mPFC_spike_range/' + experiment_names[index], spike_filtered.astype(np.int16))
     # use this data to make cutout timestamps
 

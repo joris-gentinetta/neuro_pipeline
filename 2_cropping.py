@@ -30,9 +30,8 @@ if 'circus' in experiment_names:
     experiment_names.remove('circus')
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[
     0] + '_0.dat'  # file to run spyking circus on (first of the data files)
-##todo undo commenting:
-# if os.listdir(target_folder + 'dat_files_mod'): #can only crop once
-#     raise Exception('Croppig already done, to redo run config.py again first.')
+if os.listdir(target_folder + 'dat_files_mod'): #can only crop once
+    raise Exception('Croppig already done, to redo run config.py again first.')
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  # seconds delay from trigger signal to mouse in the maze #same as in 1_config.py
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -81,7 +80,6 @@ for index, experiment_name in enumerate(experiment_names):
         xy = xy[:, boolean_frame_rate]
         np.save(target_folder + 'mPFC_spike_range/' + experiment_name,
                 mPFC_spike_range.astype(np.int16))  # used to calculate mean waveform in 4_sanity_check.py
-        ####todo:
         if experiment_name[-9:-6] == 'EZM':
             transitions = {}
             for mode in events['transitions']:

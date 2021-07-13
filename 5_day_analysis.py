@@ -5,11 +5,11 @@ max_duration = 1200  # max duration to analyze,  if negative, crops from end, el
 show = True  # show plots?
 save = False  # save plots?
 do_archive = False  # store characteristics to archive?
-single_figures = True  # plot single figures (to put in presentations etc.)
-multi_figure = False  # plot figures together (for quick overview)
+single_figures = False  # plot single figures (to put in presentations etc.)
+multi_figure = True  # plot figures together (for quick overview)
 alert_when_done = False
 
-toplot = ['phase']
+toplot = ['statistics']
 # subselection of: ['raw', 'trace_filtered', 'trace', 'environment', 'transitions', 'statistics', 'phase']
 # for full archive need at least ['transitions', 'statistics', 'phase']
 # see the thesis for an explanation of the options

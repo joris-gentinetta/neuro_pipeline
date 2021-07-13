@@ -154,7 +154,7 @@ def plot_corners(plot_folder, ROI, data_separation, show=False, save=True):
 
 
 # plots barplot of the mean phaseplots of all included units, error bars are SEM
-def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True):  # todo binned is already mean??
+def plot_phase(plot_folder, binned, data_separation, mode, show=False, save=True):
     binned = binned
     file_data_separation = plot_folder + mode + '_' + data_separation
     unit_mean = np.mean(binned, axis=1)
