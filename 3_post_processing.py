@@ -44,6 +44,8 @@ for i in range(idx.size):
         indexer[idx[i]] = n
         n += 1
 
+
+## assign the firing events to individual recording sessions (arena, EZM, OFT):
 logbook_1 = np.load(target_folder + 'utils/logbook.npy')  # contains the lengths of the sessions, 20000Hz
 logbook_2 = np.zeros(len(experiment_names) + 1)
 logbook_2[1:] = logbook_1[
@@ -56,7 +58,7 @@ original_logbook_3 = logbook_3  # contains the idices of the start times of the 
 logbook_3 = logbook_3 * frame_rate // sampling_rate  # contains the idices of the start times of the sessions, 50 Hz
 
 original_spiketimes = np.load(folder + stimes)  # array with the spiketimes, 20000Hz
-spiketimes = original_spiketimes * frame_rate // sampling_rate  # array with the spiketimes, 20000Hz
+spiketimes = original_spiketimes * frame_rate // sampling_rate  # array with the spiketimes, 50Hz
 clusters = np.load(folder + sclusters)  # array with the unit_IDs associated with the spiketimes
 data = np.zeros((int(indexer.max() + 1), logbook_3[-1]), dtype=np.uint8)  # rows: units, columns: 50Hz frames
 original_data = np.zeros((int(indexer.max() + 1), original_logbook_3[-1]),

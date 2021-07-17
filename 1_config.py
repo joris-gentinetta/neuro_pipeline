@@ -154,7 +154,7 @@ mPFC_channels = list(
     np.array(mPFC_channels)[np.array(mPFC_impedance) < max_impedance])  # remove channels above max impedance
 vHIP_channels = list(np.array(vHIP_channels)[np.array(vHIP_impedance) < max_impedance])
 ##save the pads corresponding to the channles/data_rows:
-mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels]
+mPFC_pads = [pta.index(channel) + 1 for channel in mPFC_channels] #
 vHIP_pads = [pta.index(channel) + 1 for channel in vHIP_channels]
 np.save(target_folder + 'utils/vHIP_pads', np.array(vHIP_pads, dtype=np.uint16))
 np.save(target_folder + 'utils/mPFC_pads', np.array(mPFC_pads, dtype=np.uint16))
@@ -208,7 +208,7 @@ for index, experiment_name in tqdm(enumerate(experiment_names)):
     # use this data to make cutout timestamps
 
 total_nb_channels = len(mPFC_channels)
-radius = 100  # radius in muekrometers to consider for templates
+radius = 100  # radius in micrometers to consider for templates in um()
 graph = []  # needs to be empty for legacy reasons
 channels = list(np.arange(0, total_nb_channels))
 geometry = {}  # the geometry of the probe

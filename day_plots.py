@@ -88,6 +88,7 @@ def plot_trace(environment, plot_folder, experiment_name, aligned, cluster_names
                 bsum = np.sum(boolean)
                 if bsum != 0:
                     grid[x, y, unit] = np.sum(content[unit + 2][boolean]) / bsum
+                #get the average firing rate per (x,y) bin (divide by number of frames within that bin to normalize)
 
         ##plot individual figures for all units
         if single_figures:
@@ -182,7 +183,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
     content[0] -= middle_x  # shift center to zero
     content[1] -= middle_y
     content[1] *= -1  # flip y axis (x=0,y=0 was originally in top left corner)
-    angle = np.arctan2(content[1], content[0])  # get angle in range -pi, -pi
+    angle = np.arctan2(content[1], content[0])  # get angle in range -pi, pi
     angle += (angle < 0) * 2 * math.pi  # shift range to 0, 2pi
 
     ## assign mean firingrate to every angle:
@@ -250,6 +251,7 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
         plt.close(fig)
 
     ## plot mean of all units:
+    # todo check percent/absolute
     unit_mean = np.mean(grid[1:] - grid[1:].mean(axis=1)[:, None], axis=0)
     colors = cm.jet(plt.Normalize()(unit_mean))
     for quadrant in range(4):

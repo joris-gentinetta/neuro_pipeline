@@ -3,17 +3,17 @@ animals = ['11','12']  # set of animals, 2 char string, example animal 9: '09'
 treatment = 'none'  # one of ['none', 'saline', 'medication']
 score = 'ezm_closed_score'
 # one of:         ['ezm_closed_score', 'ezm_transition_score', 'of_corners_score', 'of_middle_score', 'treatment_score']
-threshold = 0.4  # in range [-1, 1]
+threshold = 0.5  # in range [-1, 1]
 data_separations = ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
                     'under_threshold_minus', 'over_threshold_minus', 'all', 'all_minus', 'all_plus']
 # selection of ['under_threshold_all', 'over_threshold_all', 'under_threshold_plus', 'over_threshold_plus',
 # 'under_threshold_minus', 'over_threshold_minus', 'all', 'all_minus', 'all_plus']
 
-# significance plus (minus is the opposite): plus['ezm_closed_score': firing rate higer in closed area,
+# significance plus (minus is the opposite): plus['ezm_closed_score': firing rate higher in closed area,
 # 'ezm_transition_score': firing rate higher in transition zones, 'of_corners_score': firing rate higher in corners,
 # 'of_middle_score': firing rate higher in the middle, 'treatment_score': firing rate higher before treatment]
 
-toplot = ['phase']
+toplot = []
 # selection of: ['circle', 'grid', 'arms', 'corners', 'transitions', 'phase']
 transition_modes = ['open_closed_entrytime', 'open_closed_exittime', 'closed_open_entrytime', 'closed_open_exittime',
                     'lingering_entrytime', 'lingering_exittime', 'prolonged_open_closed_entrytime',
@@ -48,7 +48,7 @@ start_time = time.time()
 ##file/folder names:
 treatment_dict = {'none': '1', 'saline': '2', 'medication': '3'}
 _, animals = (list(t) for t in zip(*sorted(
-    zip([int(animal) for animal in animals], animals))))  # sort the strins of animals by their numerical value
+    zip([int(animal) for animal in animals], animals))))  # sort the strings of animals by their numerical value
 days = [treatment_dict[treatment] + animal for animal in animals]
 sorter = 'circus'
 data_folder = r'E:/anxiety_ephys/'

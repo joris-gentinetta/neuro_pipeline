@@ -89,7 +89,7 @@ for experiment_name in experiment_names:
     aligned = utils.create_aligned(spikes_50, xy, max_duration,
                                    make_path_visible)  # 1. row: x coordinates, 2. row: y coordinates, rest: units, columns: frames 50Hz
     if do_archive:
-        archive.loc[:, ('characteristics', 'mean_' + environment)] = np.mean(aligned[2:], axis=1)
+        archive.loc[:, ('characteristics', 'mean_' + environment)] = np.mean(aligned[2:], axis=1)# mean_firing rate
 
     #################################
     if 'phase' in toplot:

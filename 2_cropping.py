@@ -30,8 +30,10 @@ if 'circus' in experiment_names:
     experiment_names.remove('circus')
 circus_entrypoint = target_folder + 'dat_files/' + experiment_names[
     0] + '_0.dat'  # file to run spyking circus on (first of the data files)
+
 if os.listdir(target_folder + 'dat_files_mod'): #can only crop once
     raise Exception('Croppig already done, to redo run config.py again first.')
+
 mouse_is_late = {'2021-02-19_mBWfus010_EZM_ephys': 70,
                  # seconds delay from trigger signal to mouse in the maze #same as in 1_config.py
                  '2021-02-19_mBWfus009_EZM_ephys': 42,
@@ -83,6 +85,7 @@ for index, experiment_name in enumerate(experiment_names):
         if experiment_name[-9:-6] == 'EZM':
             transitions = {}
             for mode in events['transitions']:
+                # todo mouse is late
                 event_indices = events['transitions'][mode]
                 event_boolean = np.zeros(mPFC_concatenated.shape[1], dtype=bool)
                 event_boolean[event_indices] = 1
@@ -92,6 +95,7 @@ for index, experiment_name in enumerate(experiment_names):
         if experiment_name[-9:-6] == 'EZM':
             transitions = {}
             for mode in events['transitions']:
+                #todo mouse is late
                 transitions[mode] = events['transitions'][mode]
     if experiment_name[-9:-6] == 'EZM':
         with open(target_folder + 'transition_files/' + experiment_name + '.pkl', 'wb') as f:
@@ -101,6 +105,7 @@ for index, experiment_name in enumerate(experiment_names):
     sos_theta = butter(N=butter_order, Wn=theta_band, btype='bandpass', analog=False, output='sos', fs=sampling_rate)
     theta_filtered = sosfiltfilt(sos_theta, vHIP_concatenated, axis=1)
     hilbert_phase = np.angle(hilbert(theta_filtered, axis=1), deg=True)  # get theta phase
+
     data_for_spikesorting = np.transpose(mPFC_concatenated)
     # save files:
     data_for_spikesorting.tofile(
@@ -111,7 +116,7 @@ np.save(target_folder + 'utils/logbook', logbook.astype(np.uint32))
 
 before_clustering_time = time.time()
 ##start clustering process:
-cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10'
+cluster_command = 'spyking-circus ' + circus_entrypoint + ' -c 10' #-c param: number of CPU cores to be used for processing
 os.system(cluster_command)
 
 ##convert output of spykingcircus for the phy viewer:
