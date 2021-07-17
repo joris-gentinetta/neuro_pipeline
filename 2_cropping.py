@@ -85,8 +85,7 @@ for index, experiment_name in enumerate(experiment_names):
         if experiment_name[-9:-6] == 'EZM':
             transitions = {}
             for mode in events['transitions']:
-                # todo mouse is late
-                event_indices = events['transitions'][mode]
+                event_indices = events['transitions'][mode] - off
                 event_boolean = np.zeros(mPFC_concatenated.shape[1], dtype=bool)
                 event_boolean[event_indices] = 1
                 event_boolean = event_boolean[boolean_frame_rate]
@@ -95,8 +94,7 @@ for index, experiment_name in enumerate(experiment_names):
         if experiment_name[-9:-6] == 'EZM':
             transitions = {}
             for mode in events['transitions']:
-                #todo mouse is late
-                transitions[mode] = events['transitions'][mode]
+                transitions[mode] = events['transitions'][mode] - off
     if experiment_name[-9:-6] == 'EZM':
         with open(target_folder + 'transition_files/' + experiment_name + '.pkl', 'wb') as f:
             pkl.dump(transitions, f)

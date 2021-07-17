@@ -250,9 +250,8 @@ def plot_circle(plot_folder, experiment_name, aligned, cluster_names, single_fig
             plt.show()
         plt.close(fig)
 
-    ## plot mean of all units:
-    # todo check percent/absolute
-    unit_mean = np.mean(grid[1:] - grid[1:].mean(axis=1)[:, None], axis=0)
+    ## plot mean of percent deviation from mean firing rate for all units:
+    unit_mean = np.mean((grid[1:] - grid[1:].mean(axis=1)[:, None])/grid[1:].mean(axis=1)[:, None], axis=0)
     colors = cm.jet(plt.Normalize()(unit_mean))
     for quadrant in range(4):
         colors[(40 + quadrant * 90) * n // 360] = [0, 0, 0, 1]
